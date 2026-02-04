@@ -168,7 +168,60 @@ const CFG0: Config = {
     { min: 50001, max: 100000, y1: 0.075, y2: 0.1125, y3: 0.15 },
     { min: 0, max: 50000, y1: 0.1125, y2: 0.1688, y3: 0.225 }
   ],
-  rb: [],
+  rb: [
+    { min: 5500001, max: 6000000, bonus: 30950 },
+    { min: 5000001, max: 5500000, bonus: 28450 },
+    { min: 4900001, max: 5000000, bonus: 25950 },
+    { min: 4800001, max: 4900000, bonus: 25452 },
+    { min: 4700001, max: 4800000, bonus: 24948 },
+    { min: 4600001, max: 4700000, bonus: 24444 },
+    { min: 4500001, max: 4600000, bonus: 23940 },
+    { min: 4400001, max: 4500000, bonus: 23436 },
+    { min: 4300001, max: 4400000, bonus: 22932 },
+    { min: 4200001, max: 4300000, bonus: 22428 },
+    { min: 4100001, max: 4200000, bonus: 21924 },
+    { min: 4000001, max: 4100000, bonus: 21420 },
+    { min: 3900001, max: 4000000, bonus: 20916 },
+    { min: 3800001, max: 3900000, bonus: 20412 },
+    { min: 3700001, max: 3800000, bonus: 19908 },
+    { min: 3600001, max: 3700000, bonus: 19404 },
+    { min: 3500001, max: 3600000, bonus: 18900 },
+    { min: 3400001, max: 3500000, bonus: 18396 },
+    { min: 3300001, max: 3400000, bonus: 17892 },
+    { min: 3200001, max: 3300000, bonus: 17388 },
+    { min: 3100001, max: 3200000, bonus: 16884 },
+    { min: 3000001, max: 3100000, bonus: 16380 },
+    { min: 2900001, max: 3000000, bonus: 15876 },
+    { min: 2800001, max: 2900000, bonus: 15372 },
+    { min: 2700001, max: 2800000, bonus: 14868 },
+    { min: 2600001, max: 2700000, bonus: 14364 },
+    { min: 2500001, max: 2600000, bonus: 13860 },
+    { min: 2400001, max: 2500000, bonus: 13356 },
+    { min: 2300001, max: 2400000, bonus: 12852 },
+    { min: 2200001, max: 2300000, bonus: 12348 },
+    { min: 2100001, max: 2200000, bonus: 11844 },
+    { min: 2000001, max: 2100000, bonus: 11340 },
+    { min: 1900001, max: 2000000, bonus: 10836 },
+    { min: 1800001, max: 1900000, bonus: 10332 },
+    { min: 1700001, max: 1800000, bonus: 9828 },
+    { min: 1600001, max: 1700000, bonus: 9324 },
+    { min: 1500001, max: 1600000, bonus: 8820 },
+    { min: 1400001, max: 1500000, bonus: 8316 },
+    { min: 1300001, max: 1400000, bonus: 7812 },
+    { min: 1200001, max: 1300000, bonus: 7308 },
+    { min: 1100001, max: 1200000, bonus: 6804 },
+    { min: 1000001, max: 1100000, bonus: 3600 },
+    { min: 900001, max: 1000000, bonus: 5796 },
+    { min: 800001, max: 900000, bonus: 5292 },
+    { min: 700001, max: 800000, bonus: 4788 },
+    { min: 600001, max: 700000, bonus: 4284 },
+    { min: 500001, max: 600000, bonus: 3780 },
+    { min: 400001, max: 500000, bonus: 3276 },
+    { min: 300001, max: 400000, bonus: 2772 },
+    { min: 200001, max: 300000, bonus: 2268 },
+    { min: 100001, max: 200000, bonus: 1764 },
+    { min: 60001, max: 100000, bonus: 1260 }
+  ],
   rbCap: 30950,
   sp: { s1a: 500, s1b: 250, s2: 500, s3: 1250, s3max: 4, top: 5000 }
 };
@@ -955,19 +1008,38 @@ function AppInner() {
               r: <Btn on={addAcct}>Add Account</Btn>,
               c: (
                 <div style={{ display: "grid", gap: 8 }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: 8,
+                      gridTemplateColumns: "110px 1fr 140px 160px 160px 1fr 110px",
+                      alignItems: "center",
+                      fontSize: 12,
+                      fontWeight: 400,
+                      opacity: 0.75
+                    }}
+                  >
+                    <div />
+                    <div>Account Name</div>
+                    <div>Managed By</div>
+                    <div>Projected Revenue</div>
+                    <div>Actual Revenue</div>
+                    <div>Notes</div>
+                    <div />
+                  </div>
                   {s.accts.map((a) => (
                     <div key={a.id} style={{ display: "grid", gap: 8, gridTemplateColumns: "110px 1fr 140px 160px 160px 1fr 110px", alignItems: "center" }}>
                       <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
-                        <input type="checkbox" checked={a.include} onChange={(e) => setAcct(a.id, { include: e.target.checked })} /> Include
+                        <input type="checkbox" checked={a.include} onChange={(e) => setAcct(a.id, { include: e.target.checked })} /> include
                       </label>
-                      <input value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} style={S.inp} />
+                      <input aria-label="Account Name" value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} style={S.inp} />
                       <Sel v={a.managedBy} set={(v: any) => setAcct(a.id, { managedBy: v })}>
                         <option value="AM">AM</option>
                         <option value="SD">SD</option>
                       </Sel>
                       <USD v={a.projectedRevenue} set={(v) => setAcct(a.id, { projectedRevenue: v })} />
                       <USD v={a.actualRevenue} set={(v) => setAcct(a.id, { actualRevenue: v })} />
-                      <input value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} style={S.inp} />
+                      <input aria-label="Notes" value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} style={S.inp} />
                       <Btn on={() => delAcct(a.id)}>Remove</Btn>
                     </div>
                   ))}
