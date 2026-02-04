@@ -1122,42 +1122,59 @@ function AppInner() {
             {Card({
               t: "SPIFFs",
               c: (
-                <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}>
-                  <Field l="A Accounts Total">
-                    <Num v={s.sp.aTot} set={(v) => setState({ sp: { ...s.sp, aTot: v } })} />
-                  </Field>
-                  <Field l="A Plans Completed By Jun 30">
-                    <Num v={s.sp.aDone} set={(v) => setState({ sp: { ...s.sp, aDone: v } })} />
-                  </Field>
-                  <div style={S.box}>
-                    <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 1</div>
-                    <div style={{ fontSize: 18, fontWeight: 900 }}>{money(spiff.s1)}</div>
+                <div style={{ display: "grid", gap: 12 }}>
+                  <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))" }}>
+                    <div style={S.box}>
+                      <div style={{ fontWeight: 800, marginBottom: 8 }}>SPIFF 1: ABX Account Plans</div>
+                      <div style={{ display: "grid", gap: 10 }}>
+                        <Field l="A Accounts Total">
+                          <Num v={s.sp.aTot} set={(v) => setState({ sp: { ...s.sp, aTot: v } })} />
+                        </Field>
+                        <Field l="A Plans Completed By Jun 30">
+                          <Num v={s.sp.aDone} set={(v) => setState({ sp: { ...s.sp, aDone: v } })} />
+                        </Field>
+                        <Field l="B Accounts Total">
+                          <Num v={s.sp.bTot} set={(v) => setState({ sp: { ...s.sp, bTot: v } })} />
+                        </Field>
+                        <Field l="B Plans Completed By Dec 31">
+                          <Num v={s.sp.bDone} set={(v) => setState({ sp: { ...s.sp, bDone: v } })} />
+                        </Field>
+                        <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 10, background: "var(--surface-alt)" }}>
+                          <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 1</div>
+                          <div style={{ fontSize: 18, fontWeight: 900 }}>{money(spiff.s1)}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={S.box}>
+                      <div style={{ fontWeight: 800, marginBottom: 8 }}>SPIFF 2: Engagement Strategy</div>
+                      <div style={{ display: "grid", gap: 10 }}>
+                        <Field l="Engagement A Accounts Completed By Sep 30">
+                          <Num v={s.sp.engDone} set={(v) => setState({ sp: { ...s.sp, engDone: v } })} />
+                        </Field>
+                        <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 10, background: "var(--surface-alt)" }}>
+                          <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 2 eligible?</div>
+                          <div style={{ fontSize: 18, fontWeight: 900 }}>{spiff.s2ok ? "Yes" : "No"}</div>
+                          <div style={{ fontSize: 12, opacity: 0.7 }}>Threshold: {spiff.thr}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={S.box}>
+                      <div style={{ fontWeight: 800, marginBottom: 8 }}>SPIFF 3: Workshops</div>
+                      <div style={{ display: "grid", gap: 10 }}>
+                        <Field l="Workshops A Accounts Completed By Dec 31">
+                          <Num v={s.sp.wkDone} set={(v) => setState({ sp: { ...s.sp, wkDone: v } })} />
+                        </Field>
+                        <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 10, background: "var(--surface-alt)" }}>
+                          <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 3 eligible?</div>
+                          <div style={{ fontSize: 18, fontWeight: 900 }}>{spiff.s3ok ? "Yes" : "No"}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <Field l="B Accounts Total">
-                    <Num v={s.sp.bTot} set={(v) => setState({ sp: { ...s.sp, bTot: v } })} />
-                  </Field>
-                  <Field l="B Plans Completed By Dec 31">
-                    <Num v={s.sp.bDone} set={(v) => setState({ sp: { ...s.sp, bDone: v } })} />
-                  </Field>
-                  <div style={S.box}>
-                    <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 2 Eligible?</div>
-                    <div style={{ fontSize: 18, fontWeight: 900 }}>{spiff.s2ok ? "Yes" : "No"}</div>
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>Threshold: {spiff.thr}</div>
-                  </div>
-                  <Field l="Engagement A Accounts Completed By Sep 30">
-                    <Num v={s.sp.engDone} set={(v) => setState({ sp: { ...s.sp, engDone: v } })} />
-                  </Field>
-                  <Field l="Workshops Completed By Dec 31">
-                    <Num v={s.sp.wkDone} set={(v) => setState({ sp: { ...s.sp, wkDone: v } })} />
-                  </Field>
-                  <div style={S.box}>
-                    <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 3 eligible?</div>
-                    <div style={{ fontSize: 18, fontWeight: 900 }}>{spiff.s3ok ? "Yes" : "No"}</div>
-                  </div>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, gridColumn: "1 / -1" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
                     <input type="checkbox" checked={s.sp.all3} onChange={(e) => setState({ sp: { ...s.sp, all3: e.target.checked } })} /> All 3 SPIFFs Completed Within 12 Months
                   </label>
-                  <div style={{ gridColumn: "1 / -1", ...S.box, display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                  <div style={{ ...S.box, display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
                     <b>SPIFF total</b>
                     <b>{money(spiff.tot)}</b>
                   </div>
