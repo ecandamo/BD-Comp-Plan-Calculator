@@ -640,7 +640,10 @@ function AppInner() {
       for (const x of computeContractTiming(cfg, r, r.rank, n(r.sign))) ev.push({ date: x.date, amount: x.amount, label: x.label, category: "Sign-on", source: r.name });
     }
     const adj = after - pre;
-    if (n(adj) !== 0) ev.push({ date: `${s.planYear}-12-31`, amount: adj, label: "Gate Adjustment", category: "Sign-on", source: "Gate" });
+    if (n(adj) !== 0) {
+      const adjLabel = adj < 0 ? "Quota not met" : "Quota Exceded";
+      ev.push({ date: `${s.planYear}-12-31`, amount: adj, label: adjLabel, category: "Sign-on", source: "Quota Achievement" });
+    }
     return { rows, pre, after, ev };
   }, [cRank, cfg, quota.factor, s.planYear]);
 
@@ -1208,7 +1211,7 @@ function AppInner() {
               <div style={S.box}>
                 <div style={{ fontSize: 12, opacity: 0.75 }}>Sign-On (After Quota)</div>
                 <div style={{ fontSize: 18, fontWeight: 900 }}>{money(totals.after)}</div>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>Gate: {pct(quota.factor)}</div>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>Quota Achievement: {pct(quota.factor)}</div>
               </div>
               <div style={S.box}>
                 <div style={{ fontSize: 12, opacity: 0.75 }}>Recurrent (Actual)</div>
