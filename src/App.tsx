@@ -686,7 +686,7 @@ const PctIn = ({ v, set }: { v: number; set: (x: number) => void }) => {
 };
 
 function AppInner() {
-  const [tab, setTab] = useState<"INPUTS" | "RESULTS" | "SETTINGS">("INPUTS");
+  const [tab, setTab] = useState<"INPUTS" | "RESULTS" | "SETTINGS" | "HELP">("INPUTS");
   const [cfg, setCfg] = useState<Config>(() => dclone(CFG0));
   const [s, setS] = useState<State>(() => dclone(S0));
   const quota = useMemo(() => computeQuotaFactor(s.booked, s.quota), [s.booked, s.quota]);
@@ -890,6 +890,9 @@ function AppInner() {
             </Btn>
             <Btn on={() => setTab("SETTINGS")} active={tab === "SETTINGS"}>
               Settings
+            </Btn>
+            <Btn on={() => setTab("HELP")} active={tab === "HELP"}>
+              Help
             </Btn>
             <Btn on={() => void doCopy()}>Copy JSON</Btn>
             {copyMsg ? <div style={{ ...S.pill, background: "var(--surface)", fontSize: 12, fontWeight: 800 }}>{copyMsg}</div> : null}
@@ -1393,6 +1396,128 @@ Scenario 4: 5-year agreement WITH T4C after year 3.`} />
                   onChange={(e) => setJ(e.target.value)}
                   style={{ ...S.inp, height: 520, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 12, borderRadius: 16 }}
                 />
+              )
+            })}
+          </div>
+        ) : null}
+
+        {tab === "HELP" ? (
+          <div style={{ display: "grid", gap: 12 }}>
+            {Card({
+              t: "How This Calculator Works",
+              c: (
+                <div style={{ display: "grid", gap: 10, fontSize: 14, lineHeight: 1.5 }}>
+                  <div>
+                    This tool estimates total BD compensation by combining three payout types: Sign-On, Recurrent, and SPIFFs. The flow is simple:
+                    enter inputs, review results, and export the payout schedule if needed.
+                  </div>
+                  <div style={{ ...S.box, background: "var(--surface-alt)" }}>
+                    <div style={{ fontWeight: 800, marginBottom: 6 }}>Quick Flow</div>
+                    <div>1) Inputs: enter plan controls, contracts, accounts, and SPIFF progress.</div>
+                    <div>2) Results: review totals and payout schedule.</div>
+                    <div>3) Settings: adjust bands and rates only if you are a plan admin.</div>
+                  </div>
+                </div>
+              )
+            })}
+
+            {Card({
+              t: "Plan Controls",
+              c: (
+                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                  <div>
+                    <b>Plan Year</b> drives all payout dates (year-end or following year where applicable).
+                  </div>
+                  <div>
+                    <b>Quota Achievement</b> applies a factor to Sign-On payouts. It floors at 70% and caps at 105%.
+                  </div>
+                  <div>
+                    <b>KPI Gate</b> unlocks Recurrent payouts. Eligibility requires at least 50,000 new annualized room nights/trips or $500,000 in new annualized revenue.
+                  </div>
+                </div>
+              )
+            })}
+
+            {Card({
+              t: "New Contracts (Sign-On)",
+              c: (
+                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                  <div>
+                    Add each new contract and enter the contract type, term, room nights (or annualized revenue for SD), BD share, and relevant dates.
+                  </div>
+                  <div>
+                    <b>Contract Type</b> determines the rate table:
+                    Network GTA and Sourcing-Only use room-night bands; SD Account uses annualized revenue.
+                  </div>
+                  <div>
+                    <b>Payout Model</b> controls split timing: Crew is 70/30 and DPAX is 50/50.
+                  </div>
+                  <div>
+                    <b>Payout Scenario</b> adjusts timing logic. Use the Timing Preview to confirm sign-on dates and amounts.
+                  </div>
+                  <div>
+                    For standard timing, year-2 payouts are adjusted by Actual vs. Projected Room Nights.
+                  </div>
+                </div>
+              )
+            })}
+
+            {Card({
+              t: "Covered Accounts (Recurrent)",
+              c: (
+                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                  <div>
+                    Add each covered account, set Projected and Actual revenue, and mark whether it should be included.
+                  </div>
+                  <div>
+                    <b>Managed By</b> controls the share used in the calculation (AM or SD).
+                  </div>
+                  <div>
+                    Recurrent payouts only apply if the KPI gate is met. Projected pays 25% at Q3; actual true-up pays in Q1 of the following year.
+                  </div>
+                </div>
+              )
+            })}
+
+            {Card({
+              t: "SPIFFs",
+              c: (
+                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                  <div>
+                    SPIFF 1 is based on completed ABX account plans. SPIFF 2 is based on engagement strategy completion, and SPIFF 3 is based on completed workshops (capped).
+                  </div>
+                  <div>
+                    Check the <b>All 3 SPIFFs Completed Within 12 Months</b> box to apply the top-up bonus when eligible.
+                  </div>
+                </div>
+              )
+            })}
+
+            {Card({
+              t: "Results and CSV Export",
+              c: (
+                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                  <div>
+                    Results show totals for Sign-On, Recurrent, SPIFFs, and the overall total. The Payout Schedule lists all payments by date and category.
+                  </div>
+                  <div>
+                    Use <b>Show CSV</b> to generate an exportable schedule you can paste into Excel.
+                  </div>
+                </div>
+              )
+            })}
+
+            {Card({
+              t: "Settings JSON (Admin Use)",
+              c: (
+                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                  <div>
+                    Settings contain rate tables and bonus bands. Only plan admins should edit these values.
+                  </div>
+                  <div>
+                    If you paste JSON here, use <b>Apply</b> to update the calculator. Invalid JSON will be rejected.
+                  </div>
+                </div>
               )
             })}
           </div>
