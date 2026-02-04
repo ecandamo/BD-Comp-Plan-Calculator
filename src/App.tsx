@@ -1499,8 +1499,19 @@ Scenario 4: 5-year agreement WITH T4C after year 3.`} />
                 </div>
               )
             })}
+
+            {Card({
+              t: "About",
+              c: (
+                <div style={{ fontSize: 14, lineHeight: 1.5 }}>
+                  Developed by Esteban Candamo (2026).
+                </div>
+              )
+            })}
           </div>
         ) : null}
+
+        <div style={{ marginTop: 6, fontSize: 12, opacity: 0.7, textAlign: "center" }}>Developed by Esteban Candamo (2026).</div>
       </div>
     </div>
   );
