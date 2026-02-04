@@ -867,38 +867,52 @@ function AppInner() {
             {Card({
               t: "Plan Controls",
               c: (
-                <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
-                  <Field l="Plan Year">
-                    <Num v={s.planYear} set={(v) => setState({ planYear: v })} />
-                  </Field>
-                  <Field l="Quota Room Nights">
-                    <RN v={s.quota} set={(v) => setState({ quota: v })} />
-                  </Field>
-                  <Field l="Booked New Room Nights">
-                    <RN v={s.booked} set={(v) => setState({ booked: v })} />
-                  </Field>
-                  <Field l="KPI: New Annualized Room Nights">
-                    <RN v={s.kpiRN} set={(v) => setState({ kpiRN: v })} />
-                  </Field>
-                  <Field l="KPI: New Annualized Revenue">
-                    <USD v={s.kpiRev} set={(v) => setState({ kpiRev: v })} />
-                  </Field>
-                  <div style={S.box}>
-                    <div style={{ fontWeight: 800 }}>Gate</div>
-                    <div style={{ marginTop: 8, fontSize: 13, display: "grid", gap: 6 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ opacity: 0.7 }}>KPI</span>
-                        <b>{kpiOk ? "Eligible" : "Not Eligible"}</b>
+                <div style={{ display: "grid", gap: 12 }}>
+                  <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+                    <Field l="Plan Year">
+                      <Num v={s.planYear} set={(v) => setState({ planYear: v })} />
+                    </Field>
+                  </div>
+                  <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))" }}>
+                    <div style={S.box}>
+                      <div style={{ fontWeight: 800, marginBottom: 8 }}>Quota Achievement</div>
+                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+                        <Field l="Quota Room Nights">
+                          <RN v={s.quota} set={(v) => setState({ quota: v })} />
+                        </Field>
+                        <Field l="Booked New Room Nights">
+                          <RN v={s.booked} set={(v) => setState({ booked: v })} />
+                        </Field>
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ opacity: 0.7 }}>Quota Achievement</span>
-                        <b>{pct(quota.achievement)}</b>
+                      <div style={{ marginTop: 10, fontSize: 13, display: "grid", gap: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span style={{ opacity: 0.7 }}>Achievement</span>
+                          <b>{pct(quota.achievement)}</b>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span style={{ opacity: 0.7 }}>Factor</span>
+                          <b>{pct(quota.factor)}</b>
+                        </div>
+                        <div style={{ fontSize: 12, opacity: 0.7 }}>{quota.note}</div>
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ opacity: 0.7 }}>Factor</span>
-                        <b>{pct(quota.factor)}</b>
+                    </div>
+
+                    <div style={S.box}>
+                      <div style={{ fontWeight: 800, marginBottom: 8 }}>KPI Gate</div>
+                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+                        <Field l="KPI: New Annualized Room Nights">
+                          <RN v={s.kpiRN} set={(v) => setState({ kpiRN: v })} />
+                        </Field>
+                        <Field l="KPI: New Annualized Revenue">
+                          <USD v={s.kpiRev} set={(v) => setState({ kpiRev: v })} />
+                        </Field>
                       </div>
-                      <div style={{ fontSize: 12, opacity: 0.7 }}>{quota.note}</div>
+                      <div style={{ marginTop: 10, fontSize: 13, display: "grid", gap: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span style={{ opacity: 0.7 }}>KPI</span>
+                          <b>{kpiOk ? "Eligible" : "Not Eligible"}</b>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
