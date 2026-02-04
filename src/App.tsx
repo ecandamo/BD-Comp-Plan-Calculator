@@ -485,12 +485,84 @@ const Card = ({ t, r, c }: { t: string; r?: any; c: any }) => (
     <div style={{ marginTop: 10 }}>{c}</div>
   </div>
 );
-const Field = ({ l, children }: { l: string; children: any }) => (
+const Field = ({ l, children }: { l: React.ReactNode; children: any }) => (
   <label style={{ display: "block" }}>
     <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 4 }}>{l}</div>
     {children}
   </label>
 );
+const InfoTip = ({ text }: { text: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <span
+      style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+    >
+      <span
+        tabIndex={0}
+        aria-label="Info"
+        style={{
+          width: 16,
+          height: 16,
+          borderRadius: "50%",
+          border: "1px solid #cbd5e1",
+          color: "#64748b",
+          fontSize: 11,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "help",
+          marginLeft: 6,
+          userSelect: "none"
+        }}
+      >
+        i
+      </span>
+      {open ? (
+        <span
+          style={{
+            position: "absolute",
+            top: "120%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#0f172a",
+            color: "#fff",
+            fontSize: 12,
+            padding: "6px 8px",
+            borderRadius: 8,
+            whiteSpace: "normal",
+            zIndex: 1000,
+            boxShadow: "0 8px 20px rgba(15, 23, 42, 0.25)",
+            width: 450,
+            maxWidth: "90vw"
+          }}
+        >
+          {text.split("\n").map((line, i, arr) => (
+            <div
+              key={i}
+              style={{
+                marginBottom: i === arr.length - 1 ? 0 : 4,
+                lineHeight: 1.3
+              }}
+            >
+              {line.includes(":") ? (
+                <>
+                  <b>{line.split(":")[0]}:</b>
+                  {line.slice(line.indexOf(":") + 1)}
+                </>
+              ) : (
+                line
+              )}
+            </div>
+          ))}
+        </span>
+      ) : null}
+    </span>
+  );
+};
 const Btn = ({ on, children, active }: { on: () => void; children: any; active?: boolean }) => {
   const [h, setH] = useState(false);
   const onv = active || h;
@@ -807,7 +879,7 @@ function AppInner() {
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: 16, display: "grid", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 900 }}>BD Team Comp Plan (2026)</div>
+            <div style={{ fontSize: 22, fontWeight: 900 }}>BD Comp Plan Calculator</div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <Btn on={() => setTab("INPUTS")} active={tab === "INPUTS"}>
@@ -868,7 +940,7 @@ function AppInner() {
         {tab === "INPUTS" ? (
           <div style={{ display: "grid", gap: 12 }}>
             {Card({
-              t: "Plan Controls",
+              t: "Comp Plan Controls",
               c: (
                 <div style={{ display: "grid", gap: 12 }}>
                   <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
@@ -926,7 +998,7 @@ function AppInner() {
             })}
 
             {Card({
-              t: "Contracts (Sign-On)",
+              t: "New Contracts (Sign-On)",
               r: <Btn on={addContract}>Add Contract</Btn>,
               c: (
                 <div style={{ display: "grid", gap: 12 }}>
@@ -1025,7 +1097,18 @@ function AppInner() {
                             <div />
                           )}
                           {!isSD ? (
-                            <Field l="Payout Scenario">
+                            <Field
+                              l={
+                                <span>
+                                  Payout Scenario
+                                  <InfoTip text={`Standard: 5-year agreement with standard payout timing.
+Scenario 1: 5-year agreement with NO T4C.
+Scenario 2: 3-year + 2-year extension WITH T4C after year 2.
+Scenario 3: 5-year agreement WITH T4C either after year 1 or after year 2.
+Scenario 4: 5-year agreement WITH T4C after year 3.`} />
+                                </span>
+                              }
+                            >
                               <Sel v={c.payoutScenario} set={(v: PS) => setContract(c.id, { payoutScenario: v })}>
                                 <option value="STANDARD">Standard</option>
                                 <option value="SCENARIO_1">Scenario 1</option>
@@ -1085,25 +1168,28 @@ function AppInner() {
               r: <Btn on={addAcct}>Add Account</Btn>,
               c: (
                 <div style={{ display: "grid", gap: 8 }}>
-                  <div
-                    style={{
-                      display: "grid",
-                      gap: 8,
-                      gridTemplateColumns: "110px 1fr 140px 160px 160px 1fr 110px",
-                      alignItems: "center",
-                      fontSize: 12,
-                      fontWeight: 400,
-                      opacity: 0.75
-                    }}
-                  >
-                    <div />
-                    <div>Account Name</div>
-                    <div>Managed By</div>
-                    <div>Projected Revenue</div>
-                    <div>Actual Revenue</div>
-                    <div>Notes</div>
-                    <div />
-                  </div>
+                  {s.accts.length ? (
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: 8,
+                        gridTemplateColumns: "110px 1fr 140px 160px 160px 1fr 110px",
+                        alignItems: "center",
+                        fontSize: 12,
+                        fontWeight: 400,
+                        opacity: 0.75,
+                        marginBottom: 4
+                      }}
+                    >
+                      <div />
+                      <div>Account Name</div>
+                      <div>Managed By</div>
+                      <div>Projected Revenue</div>
+                      <div>Actual Revenue</div>
+                      <div>Notes</div>
+                      <div />
+                    </div>
+                  ) : null}
                   {s.accts.map((a) => (
                     <div key={a.id} style={{ display: "grid", gap: 8, gridTemplateColumns: "110px 1fr 140px 160px 160px 1fr 110px", alignItems: "center" }}>
                       <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
