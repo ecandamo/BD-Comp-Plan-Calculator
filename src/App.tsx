@@ -915,6 +915,9 @@ function AppInner() {
                           <span style={{ opacity: 0.7 }}>KPI</span>
                           <b>{kpiOk ? "Eligible" : "Not Eligible"}</b>
                         </div>
+                        <div style={{ fontSize: 12, opacity: 0.7 }}>
+                          Eligibility requires either 50,000 new client annualized room nights/trips or $500,000 in new client annualized revenue (any line of business).
+                        </div>
                       </div>
                     </div>
                   </div>
