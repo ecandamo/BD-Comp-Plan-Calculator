@@ -3,8 +3,28 @@
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light;
-  background-color: #f8fafc;
-  color: #0f172a;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-alt: #f1f5f9;
+  --text: #0f172a;
+  --border: #e5e7eb;
+  --pill: #f8fafc;
+  --accent: #0f172a;
+  --accent-contrast: #ffffff;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --surface: #0f172a;
+  --surface-alt: #111827;
+  --text: #e2e8f0;
+  --border: #1f2937;
+  --pill: #0b1220;
+  --accent: #38bdf8;
+  --accent-contrast: #0b1220;
 }
 
 * {
@@ -14,6 +34,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
 }
 
 button, input, select, textarea {

@@ -470,11 +470,11 @@ export const buildPayoutCSV = (rows: EventRow[]) => {
 };
 
 const S = {
-  wrap: { minHeight: "100vh", background: "#f8fafc", color: "#0f172a" },
-  box: { border: "1px solid #e5e7eb", borderRadius: 16, padding: 12, background: "#fff" },
-  pill: { padding: "6px 10px", borderRadius: 12, border: "1px solid #e5e7eb", background: "#f8fafc" },
-  inp: { width: "100%", padding: "8px 10px", borderRadius: 12, border: "1px solid #e5e7eb" },
-  btn: { padding: "8px 10px", borderRadius: 12, border: "1px solid #e5e7eb", background: "#fff", fontWeight: 600 }
+  wrap: { minHeight: "100vh", background: "var(--bg)", color: "var(--text)" },
+  box: { border: "1px solid var(--border)", borderRadius: 16, padding: 12, background: "var(--surface)" },
+  pill: { padding: "6px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--pill)" },
+  inp: { width: "100%", padding: "8px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" },
+  btn: { padding: "8px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontWeight: 600 }
 };
 const Card = ({ t, r, c }: { t: string; r?: any; c: any }) => (
   <div style={S.box}>
@@ -502,9 +502,9 @@ const Btn = ({ on, children, active }: { on: () => void; children: any; active?:
       style={{
         ...S.btn,
         cursor: "pointer",
-        background: onv ? "#0f172a" : "#fff",
-        color: onv ? "#fff" : "#0f172a",
-        borderColor: onv ? "#0f172a" : "#e5e7eb"
+        background: onv ? "var(--accent)" : "var(--surface)",
+        color: onv ? "var(--accent-contrast)" : "var(--text)",
+        borderColor: onv ? "var(--accent)" : "var(--border)"
       }}
     >
       {children}
@@ -740,6 +740,22 @@ function AppInner() {
   const [showCsv, setShowCsv] = useState(false);
   const csvRef = useRef<HTMLTextAreaElement | null>(null);
   const settingsRef = useRef<HTMLTextAreaElement | null>(null);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {}
+    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return "light";
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {}
+  }, [theme]);
   const doCopy = async () => {
     const txt = JSON.stringify({ cfg, s }, null, 2);
     const ok = await attemptClipboardWrite(txt);
@@ -801,7 +817,48 @@ function AppInner() {
               Settings
             </Btn>
             <Btn on={() => void doCopy()}>Copy JSON</Btn>
-            {copyMsg ? <div style={{ ...S.pill, background: "#fff", fontSize: 12, fontWeight: 800 }}>{copyMsg}</div> : null}
+            {copyMsg ? <div style={{ ...S.pill, background: "var(--surface)", fontSize: 12, fontWeight: 800 }}>{copyMsg}</div> : null}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 8px",
+                borderRadius: 999,
+                border: "1px solid var(--border)",
+                background: "var(--surface)",
+                color: "var(--text)",
+                cursor: "pointer"
+              }}
+            >
+              <span style={{ fontSize: 14 }}>{theme === "dark" ? "🌙" : "☀️"}</span>
+              <span
+                style={{
+                  width: 34,
+                  height: 18,
+                  borderRadius: 999,
+                  background: "var(--pill)",
+                  border: "1px solid var(--border)",
+                  position: "relative"
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 1,
+                    left: theme === "dark" ? 17 : 1,
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background: "var(--accent)",
+                    transition: "left 160ms ease"
+                  }}
+                />
+              </span>
+            </button>
           </div>
         </div>
 
@@ -978,13 +1035,13 @@ function AppInner() {
                           )}
                         </div>
 
-                        <div style={{ marginTop: 10, ...S.box, background: "#f8fafc" }}>
+                        <div style={{ marginTop: 10, ...S.box, background: "var(--surface-alt)" }}>
                           <div style={{ fontSize: 12, fontWeight: 800, opacity: 0.8 }}>Timing Preview</div>
                           <div style={{ marginTop: 8, display: "grid", gap: 6, gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))" }}>
                             {timing.map((t: any, i: number) => (
                               <div
                                 key={i}
-                                style={{ display: "flex", justifyContent: "space-between", gap: 10, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "8px 10px", fontSize: 13 }}
+                                style={{ display: "flex", justifyContent: "space-between", gap: 10, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px 10px", fontSize: 13 }}
                               >
                                 <div style={{ minWidth: 0, flex: 1 }}>
                                   <b>{t.date || "(No Date)"}</b> <span style={{ opacity: 0.7 }}>{t.label}</span>
@@ -1142,7 +1199,7 @@ function AppInner() {
               c: (
                 <div style={{ display: "grid", gap: 10 }}>
                   {showCsv && csvText ? (
-                    <div style={{ ...S.box, background: "#f8fafc" }}>
+                    <div style={{ ...S.box, background: "var(--surface-alt)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                         <div style={{ fontSize: 12, fontWeight: 800, opacity: 0.8 }}>CSV Output</div>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -1171,7 +1228,7 @@ function AppInner() {
                       </thead>
                       <tbody>
                         {events.map((e, i) => (
-                          <tr key={i} style={{ borderTop: "1px solid #e5e7eb" }}>
+                        <tr key={i} style={{ borderTop: "1px solid var(--border)" }}>
                             <td style={{ padding: 8, fontWeight: 800 }}>{e.date || "(No Date)"}</td>
                             <td style={{ padding: 8 }}>{e.category}</td>
                             <td style={{ padding: 8 }}>{e.source}</td>
@@ -1203,7 +1260,7 @@ function AppInner() {
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                   <Btn on={() => void doCopy()}>Copy</Btn>
                   <Btn on={apply}>Apply</Btn>
-                  {copyMsg ? <div style={{ ...S.pill, background: "#fff", fontSize: 12, fontWeight: 800 }}>{copyMsg}</div> : null}
+                  {copyMsg ? <div style={{ ...S.pill, background: "var(--surface)", fontSize: 12, fontWeight: 800 }}>{copyMsg}</div> : null}
                 </div>
               ),
               c: (
