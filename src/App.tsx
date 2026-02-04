@@ -903,39 +903,18 @@ function AppInner() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 8,
-                padding: "6px 8px",
+                justifyContent: "center",
+                width: 34,
+                height: 34,
                 borderRadius: 999,
                 border: "1px solid var(--border)",
                 background: "var(--surface)",
                 color: "var(--text)",
-                cursor: "pointer"
+                cursor: "pointer",
+                fontSize: 16
               }}
             >
-              <span style={{ fontSize: 14 }}>{theme === "dark" ? "🌙" : "☀️"}</span>
-              <span
-                style={{
-                  width: 34,
-                  height: 18,
-                  borderRadius: 999,
-                  background: "var(--pill)",
-                  border: "1px solid var(--border)",
-                  position: "relative"
-                }}
-              >
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 1,
-                    left: theme === "dark" ? 17 : 1,
-                    width: 14,
-                    height: 14,
-                    borderRadius: "50%",
-                    background: "var(--accent)",
-                    transition: "left 160ms ease"
-                  }}
-                />
-              </span>
+              {theme === "dark" ? "🌙" : "☀️"}
             </button>
           </div>
         </div>
