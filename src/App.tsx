@@ -1506,7 +1506,7 @@ Scenario 4: 5-year agreement WITH T4C after year 3.`} />
                 <div style={{ fontSize: 14, lineHeight: 1.5 }}>
                   Developed by Esteban Candamo (2026).
                   <div style={{ marginTop: 6, fontSize: 13, opacity: 0.8 }}>
-                    Restricted to authorized employees of Accommodation Plus International.
+                    Restricted to authorized employees of Accommodations Plus International.
                   </div>
                 </div>
               )
@@ -1515,7 +1515,7 @@ Scenario 4: 5-year agreement WITH T4C after year 3.`} />
         ) : null}
 
         <div style={{ marginTop: 6, fontSize: 12, opacity: 0.7, textAlign: "center" }}>
-          Restricted to authorized employees of Accommodation Plus International. © 2026 Esteban Candamo. All rights reserved.
+          Restricted to authorized employees of Accommodations Plus International. © 2026 Esteban Candamo. All rights reserved.
         </div>
       </div>
     </div>
