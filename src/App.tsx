@@ -343,26 +343,40 @@ export const computeContractTiming = (cfg: Config, c: Contract, rank: number | n
   const model = c.payoutModel || (c.line === "DPAX" ? "DPAX_50_50" : "AIRLINE_70_30");
   const scen = c.payoutScenario || "STANDARD";
   const isD = model === "DPAX_50_50";
+  const proj = n(c.projectedRoomNights),
+    act = c.actualRoomNights === "" ? proj : n(c.actualRoomNights),
+    adj = proj > 0 ? act / proj : 1;
+  const splitYear2Adjusted = (baseAmount: number, baseLabel: string) => {
+    const adjAmount = baseAmount * (adj - 1);
+    return {
+      total: baseAmount + adjAmount,
+      rows: [
+        { date: addYears(start, 1), amount: baseAmount, label: baseLabel },
+        { date: addYears(start, 1), amount: adjAmount, label: "Projection Variance Adjustment (Actual vs Projected RN)" }
+      ]
+    };
+  };
   const termTotal = (yrs: number) => computeContractSignOnTotal(cfg, { ...c, termYears: yrs }, rank).total;
   if (scen === "SCENARIO_1") {
     const t = termTotal(5);
+    const y2 = splitYear2Adjusted((isD ? 0.5 : 0.3) * t, isD ? "Sign-On (50% remaining)" : "Sign-On (30% remaining)");
     return [
-      { date: addDays(start, 30), amount: (isD ? 0.5 : 0.7) * t, label: "Sign-On (start)" },
-      { date: addYears(start, 1), amount: (isD ? 0.5 : 0.3) * t, label: "Sign-on (anniversary)" }
+      { date: addDays(start, 30), amount: (isD ? 0.5 : 0.7) * t, label: isD ? "Sign-On (50% on start)" : "Sign-On (70% on start)" },
+      ...y2.rows
     ];
   }
   if (scen === "SCENARIO_2") {
     const t2 = termTotal(2),
       t5 = termTotal(5);
     const p1 = (isD ? 0.5 : 0.7) * t2,
-      p2 = (isD ? 0.5 : 0.3) * t2,
-      prev = p1 + p2,
+      y2 = splitYear2Adjusted((isD ? 0.5 : 0.3) * t2, isD ? "Sign-On (50% remaining)" : "Sign-On (30% remaining)"),
+      prev = p1 + y2.total,
       rem = t5 - prev;
     return [
-      { date: addDays(start, 30), amount: p1, label: "Sign-on (initial)" },
-      { date: addYears(start, 1), amount: p2, label: "Sign-on (anniversary)" },
-      { date: addYears(start, 3), amount: rem / 2, label: "Extension True-Up (year 4)" },
-      { date: addYears(start, 4), amount: rem / 2, label: "Extension true-up (year 5)" }
+      { date: addDays(start, 30), amount: p1, label: isD ? "Sign-On (50% on start)" : "Sign-On (70% on start)" },
+      ...y2.rows,
+      { date: addYears(start, 3), amount: rem / 2, label: "50% of year 4 payout minus previous payouts" },
+      { date: addYears(start, 4), amount: rem / 2, label: "50% of year 5 payout minus previous payouts" }
     ];
   }
   if (scen === "SCENARIO_3") {
@@ -370,15 +384,15 @@ export const computeContractTiming = (cfg: Config, c: Contract, rank: number | n
     const base = cl(n(c.t4cAfterYear ?? 2), min, 4);
     const tb = termTotal(base);
     const p1 = (isD ? 0.5 : 0.7) * tb,
-      p2 = (isD ? 0.5 : 0.3) * tb;
-    let prev = p1 + p2;
+      y2 = splitYear2Adjusted((isD ? 0.5 : 0.3) * tb, isD ? "Sign-On (50% remaining)" : "Sign-On (30% remaining)");
+    let prev = p1 + y2.total;
     const ev = [
-      { date: addDays(start, 30), amount: p1, label: `Sign-on (Based On ${base}y)` },
-      { date: addYears(start, 1), amount: p2, label: `Sign-on (based on ${base}y)` }
+      { date: addDays(start, 30), amount: p1, label: isD ? "Sign-On (50% on start)" : "Sign-On (70% on start)" },
+      ...y2.rows
     ];
     for (let ty = Math.max(3, base + 1); ty <= 5; ty++) {
       const t = termTotal(ty);
-      ev.push({ date: addYears(start, ty - 1), amount: t - prev, label: `True-Up to ${ty}-year payout` });
+      ev.push({ date: addYears(start, ty - 1), amount: t - prev, label: `100% of year ${ty} payout minus previous payouts` });
       prev = t;
     }
     return ev;
@@ -388,26 +402,20 @@ export const computeContractTiming = (cfg: Config, c: Contract, rank: number | n
       t4 = termTotal(4),
       t5 = termTotal(5);
     const p1 = (isD ? 0.5 : 0.7) * t3,
-      p2 = (isD ? 0.5 : 0.3) * t3;
-    const prev = p1 + p2;
+      y2 = splitYear2Adjusted((isD ? 0.5 : 0.3) * t3, isD ? "Sign-On (50% remaining)" : "Sign-On (30% remaining)");
+    const prev = p1 + y2.total;
     return [
-      { date: addDays(start, 30), amount: p1, label: "Sign-on (based on 3y)" },
-      { date: addYears(start, 1), amount: p2, label: "Sign-on (based on 3y)" },
-      { date: addYears(start, 3), amount: t4 - prev, label: "True-up to 4-year payout" },
-      { date: addYears(start, 4), amount: t5 - t4, label: "True-up to 5-year payout" }
+      { date: addDays(start, 30), amount: p1, label: isD ? "Sign-On (50% on start)" : "Sign-On (70% on start)" },
+      ...y2.rows,
+      { date: addYears(start, 3), amount: t4 - prev, label: "100% of year 4 payout minus previous payouts" },
+      { date: addYears(start, 4), amount: t5 - t4, label: "100% of year 5 payout minus previous payouts" }
     ];
   }
-  const proj = n(c.projectedRoomNights),
-    act = c.actualRoomNights === "" ? proj : n(c.actualRoomNights),
-    adj = proj > 0 ? act / proj : 1;
   if (isD)
-    return [
-      { date: addDays(start, 30), amount: 0.5 * sign, label: "Sign-on (50% on start)" },
-      { date: addYears(start, 1), amount: 0.5 * sign * adj, label: "Sign-on (50% after 1st anniversary, adjusted)" }
-    ];
+    return [{ date: addDays(start, 30), amount: 0.5 * sign, label: "Sign-On (50% on start)" }, ...splitYear2Adjusted(0.5 * sign, "Sign-On (50% remaining)").rows];
   return [
-    { date: addDays(start, 30), amount: 0.7 * sign, label: "Sign-on (70% on start)" },
-    { date: addYears(start, 1), amount: 0.3 * sign * adj, label: "Sign-on (30% after 1st anniversary, adjusted)" }
+    { date: addDays(start, 30), amount: 0.7 * sign, label: "Sign-On (70% on start)" },
+    ...splitYear2Adjusted(0.3 * sign, "Sign-On (30% remaining)").rows
   ];
 };
 
@@ -691,6 +699,15 @@ function AppInner() {
   const [s, setS] = useState<State>(() => dclone(S0));
   const quota = useMemo(() => computeQuotaFactor(s.booked, s.quota), [s.booked, s.quota]);
   const kpiOk = useMemo(() => n(s.kpiRN) >= 50000 || n(s.kpiRev) >= 500000, [s.kpiRN, s.kpiRev]);
+  const quotaVarianceLabel = useMemo(() => {
+    if (n(s.quota) <= 0) return "Quota Variance: -30.00% (Set quota)";
+    const raw = n(quota.achievement) - 1;
+    const capped = cl(raw, -0.3, 0.05);
+    const val = `${capped > 0 ? "+" : ""}${pct(capped)}`;
+    if (Math.abs(capped) < 1e-9) return `Quota Variance: ${val} (On target)`;
+    if (capped > 0) return raw > 0.05 ? `Quota Variance: ${val} (Overachievement cap applied)` : `Quota Variance: ${val} (Overachievement)`;
+    return raw < -0.3 ? `Quota Variance: ${val} (Shortfall cap applied)` : `Quota Variance: ${val} (Shortfall)`;
+  }, [quota.achievement, s.quota]);
 
   const cRank = useMemo(() => {
     const el = s.contracts.filter((c) => c.type !== "SD_ACCOUNT").map((c) => ({ ...c, v: n(c.projectedRoomNights) }));
@@ -713,11 +730,11 @@ function AppInner() {
     }
     const adj = after - pre;
     if (n(adj) !== 0) {
-      const adjLabel = adj < 0 ? "Quota not met" : "Quota Exceded";
+      const adjLabel = quotaVarianceLabel;
       ev.push({ date: `${s.planYear}-12-31`, amount: adj, label: adjLabel, category: "Sign-on", source: "Quota Achievement" });
     }
     return { rows, pre, after, ev };
-  }, [cRank, cfg, quota.factor, s.planYear]);
+  }, [cRank, cfg, quota.factor, quotaVarianceLabel, s.planYear]);
 
   const recurrent = useMemo(() => {
     const rows = s.accts
@@ -996,11 +1013,13 @@ function AppInner() {
                         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
                           <input value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} style={{ ...S.inp, flex: "1 1 260px", fontWeight: 800 }} />
                           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                            <div style={S.pill}>
-                              <span style={{ opacity: 0.7 }}>Before Quota:</span> <b>{money(pre)}</b>
+                            <div style={{ ...S.pill, display: "grid", gap: 2 }}>
+                              <span style={{ opacity: 0.7, fontSize: 11, lineHeight: 1.25 }}>Total Payout - No Quota Adjustment</span>
+                              <b>{money(pre)}</b>
                             </div>
-                            <div style={S.pill}>
-                              <span style={{ opacity: 0.7 }}>After Quota:</span> <b>{money(after)}</b>
+                            <div style={{ ...S.pill, display: "grid", gap: 2 }}>
+                              <span style={{ opacity: 0.7, fontSize: 11, lineHeight: 1.25 }}>Quota Adjusted - Actual Payout</span>
+                              <b>{money(after)}</b>
                             </div>
                             <Btn on={() => delContract(c.id)}>Remove</Btn>
                           </div>
@@ -1282,7 +1301,7 @@ Scenario 4: 5-year agreement WITH T4C after year 3.`} />
               <div style={S.box}>
                 <div style={{ fontSize: 12, opacity: 0.75 }}>Sign-On (After Quota)</div>
                 <div style={{ fontSize: 18, fontWeight: 900 }}>{money(totals.after)}</div>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>Quota Achievement: {pct(quota.factor)}</div>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>{quotaVarianceLabel}</div>
               </div>
               <div style={S.box}>
                 <div style={{ fontSize: 12, opacity: 0.75 }}>Recurrent (Actual)</div>
