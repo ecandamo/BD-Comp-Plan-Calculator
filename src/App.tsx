@@ -61,6 +61,14 @@ type LT = "AIRLINE_CREW" | "DPAX";
 type PM = "AIRLINE_70_30" | "DPAX_50_50" | "SD_QUARTERLY";
 type PS = "STANDARD" | "SCENARIO_1" | "SCENARIO_2" | "SCENARIO_3" | "SCENARIO_4";
 
+const PAYOUT_SCENARIO_OPTION_TEXT: Record<PS, string> = {
+  STANDARD: "Standard | 5-year agreement with standard payout timing.",
+  SCENARIO_1: "Scenario 1 | 5-year agreement with NO T4C.",
+  SCENARIO_2: "Scenario 2 | 3-year + 2-year extension WITH T4C after year 2.",
+  SCENARIO_3: "Scenario 3 | 5-year agreement WITH T4C either after year 1 or after year 2.",
+  SCENARIO_4: "Scenario 4 | 5-year agreement WITH T4C after year 3."
+};
+
 type Contract = {
   id: string;
   name: string;
@@ -116,6 +124,7 @@ type State = {
   planYear: number;
   quota: number;
   booked: number;
+  includeQuotaInPayoutSchedule: boolean;
   kpiRN: number;
   kpiRev: number;
   contracts: Contract[];
@@ -230,6 +239,7 @@ const S0: State = {
   planYear: 2026,
   quota: 50000,
   booked: 0,
+  includeQuotaInPayoutSchedule: false,
   kpiRN: 0,
   kpiRev: 0,
   contracts: [
@@ -729,12 +739,15 @@ function AppInner() {
       for (const x of computeContractTiming(cfg, r, r.rank, n(r.sign))) ev.push({ date: x.date, amount: x.amount, label: x.label, category: "Sign-on", source: r.name });
     }
     const adj = after - pre;
-    if (n(adj) !== 0) {
-      const adjLabel = quotaVarianceLabel;
+    if (n(adj) !== 0 && s.includeQuotaInPayoutSchedule) {
+      const quotaMet = n(quota.achievement) >= 1;
+      const rawVariance = n(quota.achievement) - 1;
+      const capNote = rawVariance < -0.3 ? " - capped at 30%" : rawVariance > 0.05 ? " - capped at 5%" : "";
+      const adjLabel = `Last year's annual room quota ${quotaMet ? "met" : "not met"} (${pct(quota.achievement)})${capNote}`;
       ev.push({ date: `${s.planYear}-12-31`, amount: adj, label: adjLabel, category: "Sign-on", source: "Quota Achievement" });
     }
     return { rows, pre, after, ev };
-  }, [cRank, cfg, quota.factor, quotaVarianceLabel, s.planYear]);
+  }, [cRank, cfg, quota.achievement, quota.factor, s.includeQuotaInPayoutSchedule, s.planYear]);
 
   const recurrent = useMemo(() => {
     const rows = s.accts
@@ -968,6 +981,14 @@ function AppInner() {
                           <b>{pct(quota.factor)}</b>
                         </div>
                         <div style={{ fontSize: 12, opacity: 0.7 }}>{quota.note}</div>
+                        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, opacity: 0.9 }}>
+                          <input
+                            type="checkbox"
+                            checked={s.includeQuotaInPayoutSchedule}
+                            onChange={(e) => setState({ includeQuotaInPayoutSchedule: e.target.checked })}
+                          />
+                          Include in Payout Schedule
+                        </label>
                       </div>
                     </div>
 
@@ -1013,14 +1034,6 @@ function AppInner() {
                         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
                           <input value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} style={{ ...S.inp, flex: "1 1 260px", fontWeight: 800 }} />
                           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                            <div style={{ ...S.pill, display: "grid", gap: 2 }}>
-                              <span style={{ opacity: 0.7, fontSize: 11, lineHeight: 1.25 }}>Total Payout - No Quota Adjustment</span>
-                              <b>{money(pre)}</b>
-                            </div>
-                            <div style={{ ...S.pill, display: "grid", gap: 2 }}>
-                              <span style={{ opacity: 0.7, fontSize: 11, lineHeight: 1.25 }}>Quota Adjusted - Actual Payout</span>
-                              <b>{money(after)}</b>
-                            </div>
                             <Btn on={() => delContract(c.id)}>Remove</Btn>
                           </div>
                         </div>
@@ -1098,26 +1111,19 @@ function AppInner() {
                             <div />
                           )}
                           {!isSD ? (
-                            <Field
-                              l={
-                                <span>
-                                  Payout Scenario
-                                  <InfoTip text={`Standard: 5-year agreement with standard payout timing.
-Scenario 1: 5-year agreement with NO T4C.
-Scenario 2: 3-year + 2-year extension WITH T4C after year 2.
-Scenario 3: 5-year agreement WITH T4C either after year 1 or after year 2.
-Scenario 4: 5-year agreement WITH T4C after year 3.`} />
-                                </span>
-                              }
-                            >
-                              <Sel v={c.payoutScenario} set={(v: PS) => setContract(c.id, { payoutScenario: v })}>
-                                <option value="STANDARD">Standard</option>
-                                <option value="SCENARIO_1">Scenario 1</option>
-                                <option value="SCENARIO_2">Scenario 2</option>
-                                <option value="SCENARIO_3">Scenario 3</option>
-                                <option value="SCENARIO_4">Scenario 4</option>
-                              </Sel>
-                            </Field>
+                            <div style={{ gridColumn: "1 / -1" }}>
+                              <Field l="Payout Scenario">
+                                <div style={{ maxWidth: 640 }}>
+                                  <Sel v={c.payoutScenario} set={(v: PS) => setContract(c.id, { payoutScenario: v })}>
+                                    <option value="STANDARD">{PAYOUT_SCENARIO_OPTION_TEXT.STANDARD}</option>
+                                    <option value="SCENARIO_1">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_1}</option>
+                                    <option value="SCENARIO_2">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_2}</option>
+                                    <option value="SCENARIO_3">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_3}</option>
+                                    <option value="SCENARIO_4">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_4}</option>
+                                  </Sel>
+                                </div>
+                              </Field>
+                            </div>
                           ) : (
                             <div />
                           )}
@@ -1318,7 +1324,7 @@ Scenario 4: 5-year agreement WITH T4C after year 3.`} />
               </div>
             </div>
             {Card({
-              t: "Payout Schedule",
+              t: "Payout Schedule - subject to annual room quota been met",
               r: <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{showCsv ? <Btn on={() => setShowCsv(false)}>Hide CSV</Btn> : <Btn on={showCSV} active>Show CSV</Btn>}</div>,
               c: (
                 <div style={{ display: "grid", gap: 10 }}>
