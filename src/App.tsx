@@ -606,8 +606,8 @@ const Sel = ({ v, set, children }: { v: any; set: (x: any) => void; children: an
     {children}
   </select>
 );
-const Num = ({ v, set, step = 1, min }: { v: any; set: (x: number) => void; step?: number; min?: number }) => (
-  <input type="number" value={Number.isFinite(v) ? v : 0} step={step} min={min} onChange={(e) => set(Number(e.target.value))} style={S.inp} />
+const Num = ({ v, set, step = 1, min, disabled = false }: { v: any; set: (x: number) => void; step?: number; min?: number; disabled?: boolean }) => (
+  <input type="number" value={Number.isFinite(v) ? v : 0} step={step} min={min} disabled={disabled} onChange={(e) => set(Number(e.target.value))} style={S.inp} />
 );
 const RN = ({ v, set }: { v: number; set: (x: number) => void }) => {
   const [f, setF] = useState(false);
@@ -1025,6 +1025,7 @@ function AppInner() {
                   {cRank.map((c: any) => {
                     const isSD = c.type === "SD_ACCOUNT";
                     const minT = c.type === "NETWORK_GTA" ? 2 : 1;
+                    const termLockedByScenario = !isSD && c.payoutScenario !== "STANDARD";
                     const r = computeContractSignOnTotal(cfg, c, c.rank ?? null);
                     const pre = r.total,
                       after = pre * quota.factor;
@@ -1070,7 +1071,12 @@ function AppInner() {
                             <div />
                           )}
                           <Field l="Term Years">
-                            <Num v={c.termYears} set={(v) => setContract(c.id, { termYears: v })} min={1} />
+                            <div style={{ display: "grid", gap: 4 }}>
+                              <Num v={c.termYears} set={(v) => setContract(c.id, { termYears: v })} min={1} disabled={termLockedByScenario} />
+                              {termLockedByScenario ? (
+                                <div style={{ fontSize: 12, opacity: 0.75 }}>Disabled for non-standard scenarios because payout uses scenario-defined years.</div>
+                              ) : null}
+                            </div>
                           </Field>
                           {!isSD ? (
                             <>
@@ -1114,7 +1120,15 @@ function AppInner() {
                             <div style={{ gridColumn: "1 / -1" }}>
                               <Field l="Payout Scenario">
                                 <div style={{ maxWidth: 640 }}>
-                                  <Sel v={c.payoutScenario} set={(v: PS) => setContract(c.id, { payoutScenario: v })}>
+                                  <Sel
+                                    v={c.payoutScenario}
+                                    set={(v: PS) =>
+                                      setContract(c.id, {
+                                        payoutScenario: v,
+                                        ...(v !== "STANDARD" ? { termYears: 5 } : {})
+                                      })
+                                    }
+                                  >
                                     <option value="STANDARD">{PAYOUT_SCENARIO_OPTION_TEXT.STANDARD}</option>
                                     <option value="SCENARIO_1">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_1}</option>
                                     <option value="SCENARIO_2">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_2}</option>
