@@ -137,6 +137,7 @@ type State = {
   contracts: Contract[];
   accts: Acct[];
   sp: { aTot: number; aDone: number; bTot: number; bDone: number; engDone: number; wkDone: number; all3: boolean };
+  payoutStatuses: Record<string, PayoutStatus>;
 };
 
 const CFG0: Config = {
@@ -270,7 +271,8 @@ const S0: State = {
   accts: [
     { id: uid(), name: "Example Covered Account", managedBy: "AM", projectedRevenue: 3000000, actualRevenue: 3000000, include: true, note: "" }
   ],
-  sp: { aTot: 10, aDone: 0, bTot: 5, bDone: 0, engDone: 0, wkDone: 0, all3: false }
+  sp: { aTot: 10, aDone: 0, bTot: 5, bDone: 0, engDone: 0, wkDone: 0, all3: false },
+  payoutStatuses: {}
 };
 
 export const computeQuotaFactor = (booked: any, quota: any) => {
@@ -859,7 +861,6 @@ function AppInner() {
   const [j, setJ] = useState(snap);
   useEffect(() => setJ(snap), [snap]);
   const [copyMsg, setCopyMsg] = useState<string | "">("");
-  const [eventStatuses, setEventStatuses] = useState<Record<string, PayoutStatus>>({});
   const [csvText, setCsvText] = useState<string>("");
   const [showCsv, setShowCsv] = useState(false);
   const csvRef = useRef<HTMLTextAreaElement | null>(null);
@@ -881,23 +882,25 @@ function AppInner() {
     } catch {}
   }, [theme]);
   useEffect(() => {
-    setEventStatuses((prev) => {
+    setS((prevState) => {
+      const prev = prevState.payoutStatuses ?? {};
       const next: Record<string, PayoutStatus> = {};
       for (const e of eventRows) {
         if (prev[e.key]) next[e.key] = prev[e.key];
       }
       const prevKeys = Object.keys(prev);
       const nextKeys = Object.keys(next);
-      if (prevKeys.length !== nextKeys.length) return next;
+      if (prevKeys.length !== nextKeys.length) return { ...prevState, payoutStatuses: next };
       for (const k of nextKeys) {
-        if (next[k] !== prev[k]) return next;
+        if (next[k] !== prev[k]) return { ...prevState, payoutStatuses: next };
       }
-      return prev;
+      return prevState;
     });
   }, [eventRows]);
 
-  const getStatus = (key: string): PayoutStatus => eventStatuses[key] ?? "TO_BE_PAID";
-  const setStatus = (key: string, status: PayoutStatus) => setEventStatuses((prev) => ({ ...prev, [key]: status }));
+  const getStatus = (key: string): PayoutStatus => (s.payoutStatuses?.[key] as PayoutStatus | undefined) ?? "TO_BE_PAID";
+  const setStatus = (key: string, status: PayoutStatus) =>
+    setS((prev) => ({ ...prev, payoutStatuses: { ...(prev.payoutStatuses ?? {}), [key]: status } }));
   const rowStyle = (status: PayoutStatus): React.CSSProperties => {
     if (status === "PAID") return { background: "var(--surface-alt)", opacity: 0.66 };
     if (status === "PENDING") return { background: theme === "dark" ? "rgba(148, 163, 184, 0.10)" : "rgba(148, 163, 184, 0.12)", opacity: 0.84 };
@@ -951,7 +954,7 @@ function AppInner() {
     try {
       const p = JSON.parse(j);
       if (p?.cfg) setCfg(p.cfg);
-      if (p?.s) setS(p.s);
+      if (p?.s) setS({ ...p.s, payoutStatuses: p.s?.payoutStatuses ?? {} });
       setCopyMsg("Applied");
       setTimeout(() => setCopyMsg(""), 1200);
     } catch {
