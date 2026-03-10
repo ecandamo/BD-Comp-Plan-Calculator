@@ -103,6 +103,13 @@ type EventRow = {
   category: "Sign-on" | "Recurrent" | "SPIFF";
   source: string;
 };
+type PayoutStatus = "TO_BE_PAID" | "PAID" | "PENDING";
+
+const PAYOUT_STATUS_LABEL: Record<PayoutStatus, string> = {
+  TO_BE_PAID: "To be paid",
+  PAID: "Paid",
+  PENDING: "Pending"
+};
 
 type NBand = { min: number; max: number | null; y2: number | null; y3: number | null; y4: number | null; y5: number | null; y6: number | null };
 type SBand = { min: number; max: number | null; y1: number; y2: number; y3: number; y4: number; y5: number; y6: number };
@@ -468,7 +475,7 @@ export const attemptClipboardWrite = async (
   }
 };
 
-export const buildPayoutCSV = (rows: EventRow[]) => {
+export const buildPayoutCSV = (rows: Array<EventRow & { status?: string }>) => {
   const NL = String.fromCharCode(10),
     CR = String.fromCharCode(13);
   const esc = (v: any) => {
@@ -482,8 +489,10 @@ export const buildPayoutCSV = (rows: EventRow[]) => {
     const r = Math.round(v * 100) / 100;
     return String(r);
   };
-  const head = ["Date", "Category", "Source", "Label", "Amount"].join(",");
-  const lines = rows.map((r) => [esc(r.date || "(No Date)"), esc(r.category || ""), esc(r.source || ""), esc(r.label || ""), amt(r.amount)].join(","));
+  const head = ["Date", "Category", "Source", "Label", "Amount", "Status"].join(",");
+  const lines = rows.map((r) =>
+    [esc(r.date || "(No Date)"), esc(r.category || ""), esc(r.source || ""), esc(r.label || ""), amt(r.amount), esc(r.status || PAYOUT_STATUS_LABEL.TO_BE_PAID)].join(",")
+  );
   return [head, ...lines].join(NL);
 };
 
@@ -798,6 +807,15 @@ function AppInner() {
     () => [...signOn.ev, ...recurrent.ev, ...spiff.ev].filter((e) => n(e.amount) !== 0).sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999")),
     [signOn.ev, recurrent.ev, spiff.ev]
   );
+  const eventRows = useMemo(() => {
+    const seen = new Map<string, number>();
+    return events.map((e) => {
+      const base = [e.date || "", e.category || "", e.source || "", e.label || "", String(Math.round(n(e.amount) * 100) / 100)].join("|");
+      const idx = (seen.get(base) ?? 0) + 1;
+      seen.set(base, idx);
+      return { ...e, key: `${base}|${idx}` };
+    });
+  }, [events]);
   const totals = useMemo(() => {
     const rec = recurrent.kpiOk ? recurrent.aTot : 0;
     return { pre: signOn.pre, after: signOn.after, rec, sp: spiff.tot, all: signOn.after + rec + spiff.tot };
@@ -841,6 +859,7 @@ function AppInner() {
   const [j, setJ] = useState(snap);
   useEffect(() => setJ(snap), [snap]);
   const [copyMsg, setCopyMsg] = useState<string | "">("");
+  const [eventStatuses, setEventStatuses] = useState<Record<string, PayoutStatus>>({});
   const [csvText, setCsvText] = useState<string>("");
   const [showCsv, setShowCsv] = useState(false);
   const csvRef = useRef<HTMLTextAreaElement | null>(null);
@@ -861,6 +880,32 @@ function AppInner() {
       localStorage.setItem("theme", theme);
     } catch {}
   }, [theme]);
+  useEffect(() => {
+    setEventStatuses((prev) => {
+      const next: Record<string, PayoutStatus> = {};
+      for (const e of eventRows) {
+        if (prev[e.key]) next[e.key] = prev[e.key];
+      }
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      if (prevKeys.length !== nextKeys.length) return next;
+      for (const k of nextKeys) {
+        if (next[k] !== prev[k]) return next;
+      }
+      return prev;
+    });
+  }, [eventRows]);
+
+  const getStatus = (key: string): PayoutStatus => eventStatuses[key] ?? "TO_BE_PAID";
+  const setStatus = (key: string, status: PayoutStatus) => setEventStatuses((prev) => ({ ...prev, [key]: status }));
+  const rowStyle = (status: PayoutStatus): React.CSSProperties => {
+    if (status === "PAID") return { background: "var(--surface-alt)", opacity: 0.66 };
+    if (status === "PENDING") return { background: theme === "dark" ? "rgba(148, 163, 184, 0.10)" : "rgba(148, 163, 184, 0.12)", opacity: 0.84 };
+    return {
+      background: theme === "dark" ? "rgba(34, 197, 94, 0.16)" : "rgba(34, 197, 94, 0.12)",
+      boxShadow: "inset 3px 0 0 rgba(34, 197, 94, 0.75)"
+    };
+  };
   const doCopy = async () => {
     const txt = JSON.stringify({ cfg, s }, null, 2);
     const ok = await attemptClipboardWrite(txt);
@@ -881,7 +926,18 @@ function AppInner() {
   };
   const showCSV = () => {
     try {
-      setCsvText(buildPayoutCSV(events));
+      setCsvText(
+        buildPayoutCSV(
+          eventRows.map((e) => ({
+            date: e.date,
+            category: e.category,
+            source: e.source,
+            label: e.label,
+            amount: e.amount,
+            status: PAYOUT_STATUS_LABEL[getStatus(e.key)]
+          }))
+        )
+      );
       setShowCsv(true);
     } catch {}
   };
@@ -1362,27 +1418,68 @@ function AppInner() {
                   <div style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                       <thead>
-                        <tr style={{ textAlign: "left", opacity: 0.75 }}>
-                          <th style={{ padding: 8 }}>Date</th>
-                          <th style={{ padding: 8 }}>Category</th>
-                          <th style={{ padding: 8 }}>Source</th>
-                          <th style={{ padding: 8 }}>Label</th>
-                          <th style={{ padding: 8, textAlign: "right" }}>Amount</th>
+                        <tr style={{ opacity: 0.75 }}>
+                          <th style={{ padding: 8, textAlign: "center" }}>Date</th>
+                          <th style={{ padding: 8, textAlign: "center" }}>Category</th>
+                          <th style={{ padding: 8, textAlign: "center" }}>Source</th>
+                          <th style={{ padding: 8, textAlign: "center" }}>Label</th>
+                          <th style={{ padding: 8, textAlign: "center" }}>Amount</th>
+                          <th style={{ padding: 8, textAlign: "center" }}>Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {events.map((e, i) => (
-                        <tr key={i} style={{ borderTop: "1px solid var(--border)" }}>
+                        {eventRows.map((e) => {
+                          const status = getStatus(e.key);
+                          return (
+                        <tr key={e.key} style={{ borderTop: "1px solid var(--border)", ...rowStyle(status) }}>
                             <td style={{ padding: 8, fontWeight: 800 }}>{e.date || "(No Date)"}</td>
                             <td style={{ padding: 8 }}>{e.category}</td>
                             <td style={{ padding: 8 }}>{e.source}</td>
                             <td style={{ padding: 8 }}>{e.label}</td>
                             <td style={{ padding: 8, textAlign: "right", fontWeight: 900 }}>{money(e.amount)}</td>
+                            <td style={{ padding: 8 }}>
+                              <select
+                                value={status}
+                                onChange={(ev) => setStatus(e.key, ev.target.value as PayoutStatus)}
+                                aria-label={`Payout status for ${e.source} ${e.label}`}
+                                style={{
+                                  ...S.inp,
+                                  minWidth: 120,
+                                  padding: "4px 8px",
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  borderRadius: 999,
+                                  borderColor:
+                                    status === "TO_BE_PAID"
+                                      ? "#22c55e"
+                                      : status === "PAID"
+                                        ? "var(--border)"
+                                        : theme === "dark"
+                                          ? "#64748b"
+                                          : "#94a3b8",
+                                  background:
+                                    status === "TO_BE_PAID"
+                                      ? theme === "dark"
+                                        ? "rgba(34, 197, 94, 0.2)"
+                                        : "rgba(34, 197, 94, 0.14)"
+                                      : status === "PAID"
+                                        ? "var(--surface)"
+                                        : theme === "dark"
+                                          ? "rgba(148, 163, 184, 0.12)"
+                                          : "rgba(148, 163, 184, 0.16)"
+                                }}
+                              >
+                                <option value="TO_BE_PAID">{PAYOUT_STATUS_LABEL.TO_BE_PAID}</option>
+                                <option value="PAID">{PAYOUT_STATUS_LABEL.PAID}</option>
+                                <option value="PENDING">{PAYOUT_STATUS_LABEL.PENDING}</option>
+                              </select>
+                            </td>
                           </tr>
-                        ))}
-                        {events.length === 0 ? (
+                          );
+                        })}
+                        {eventRows.length === 0 ? (
                           <tr>
-                            <td colSpan={5} style={{ padding: 10, opacity: 0.7 }}>
+                            <td colSpan={6} style={{ padding: 10, opacity: 0.7 }}>
                               No Payouts Yet.
                             </td>
                           </tr>
@@ -1623,6 +1720,6 @@ export default function App() {
   console.assert(parseUSD("$1,234,567") === 1234567, "usd parse commas");
   console.assert(parseUSD("12x") === 12, "usd parse mixed");
   const csv = buildPayoutCSV([{ date: "2026-01-01", amount: 1234.5, label: "L", category: "Sign-on", source: "S" }]);
-  console.assert(csv.split(String.fromCharCode(10))[0] === "Date,Category,Source,Label,Amount", "csv header");
-  console.assert(csv.includes("2026-01-01,Sign-on,S,L,1234.5"), "csv row raw amount");
+  console.assert(csv.split(String.fromCharCode(10))[0] === "Date,Category,Source,Label,Amount,Status", "csv header");
+  console.assert(csv.includes("2026-01-01,Sign-on,S,L,1234.5,To be paid"), "csv row raw amount");
 })();
