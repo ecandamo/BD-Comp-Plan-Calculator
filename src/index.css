@@ -73,9 +73,9 @@ body {
   min-height: 100vh;
   font-family: var(--font-ui);
   background:
-    radial-gradient(circle at top left, rgba(120, 188, 67, 0.48), transparent 36%),
-    radial-gradient(circle at top right, rgba(39, 59, 110, 0.48), transparent 40%),
-    linear-gradient(180deg, #dce7f4 0%, #eef2f8 42%, #dde4ef 100%);
+    radial-gradient(circle at top left, rgba(120, 188, 67, 0.22), transparent 28%),
+    radial-gradient(circle at top right, rgba(39, 59, 110, 0.22), transparent 32%),
+    linear-gradient(180deg, #eff4fb 0%, #f6f8fc 35%, #eef1f6 100%);
   color: var(--brand-ink);
 }
 
@@ -333,18 +333,17 @@ textarea:focus-visible {
   width: 34px;
   height: 34px;
   border-radius: 9999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
+  border: 0;
+  background: transparent;
+  color: var(--brand-primary);
   cursor: pointer;
   font-size: 16px;
-  box-shadow: var(--shadow-card);
-  border-color: var(--brand-navy);
-  color: var(--brand-navy);
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .icon-button:hover {
-  background: color-mix(in srgb, var(--surface) 84%, var(--brand-cloud));
+  background: rgba(226, 234, 246, 0.8);
 }
 
 .icon-button:active {
@@ -405,12 +404,11 @@ textarea:focus-visible {
 }
 
 [data-theme="dark"] .icon-button {
-  border-color: rgba(120, 188, 67, 0.52);
   color: #eff4ff;
 }
 
 [data-theme="dark"] .icon-button:hover {
-  background: color-mix(in srgb, var(--surface) 86%, var(--brand-green));
+  background: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .brand-logo-wrap {
