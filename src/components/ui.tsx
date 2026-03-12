@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 
 export const UI = {
-  wrap: { minHeight: "100vh", background: "var(--bg)", color: "var(--text)" },
   box: { border: "1px solid var(--border)", borderRadius: 16, padding: 12, background: "var(--surface)", boxShadow: "var(--shadow-card)" },
-  pill: { padding: "6px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--pill)" },
-  inp: { width: "100%", padding: "8px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" },
   btn: { padding: "8px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontWeight: 600 }
 } as const;
 

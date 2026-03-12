@@ -781,14 +781,6 @@ function AppInner() {
   const getStatus = (key: string): PayoutStatus => (s.payoutStatuses?.[key] as PayoutStatus | undefined) ?? "TO_BE_PAID";
   const setStatus = (key: string, status: PayoutStatus) =>
     setS((prev) => ({ ...prev, payoutStatuses: { ...(prev.payoutStatuses ?? {}), [key]: status } }));
-  const rowStyle = (status: PayoutStatus): React.CSSProperties => {
-    if (status === "PAID") return { background: "var(--surface-alt)", opacity: 0.66 };
-    if (status === "PENDING") return { background: theme === "dark" ? "rgba(148, 163, 184, 0.10)" : "rgba(148, 163, 184, 0.12)", opacity: 0.84 };
-    return {
-      background: theme === "dark" ? "rgba(34, 197, 94, 0.16)" : "rgba(34, 197, 94, 0.12)",
-      boxShadow: "inset 3px 0 0 rgba(34, 197, 94, 0.75)"
-    };
-  };
   const doCopy = async () => {
     const txt = JSON.stringify({ cfg, s }, null, 2);
     const ok = await attemptClipboardWrite(txt);
@@ -844,19 +836,24 @@ function AppInner() {
   };
 
   return (
-    <div style={UI.wrap} className="app-shell min-h-screen">
-      <div className="app-container mx-auto grid max-w-[1100px] gap-3 p-4">
-        <div className="app-header flex flex-wrap items-center justify-between gap-2.5">
-          <div className="brand-lockup">
-            <div className="brand-logo-wrap">
-              <img className="brand-logo" src={headerLogoSrc} alt="Accommodations Plus International logo" />
+    <div className="app-shell min-h-screen ui-wrap">
+      <div className="app-container ui-container">
+        <div className="app-header">
+          <div className="header-bar">
+            <div className="brand-lockup">
+              <div className="brand-logo-wrap">
+                <img className="brand-logo" src={headerLogoSrc} alt="Accommodations Plus International logo" />
+              </div>
+              <div>
+                <div className="brand-subtitle">API Global Solutions</div>
+                <div className="app-title text-[22px] font-black">BD Comp Plan Calculator</div>
+              </div>
             </div>
-            <div>
-              <div className="app-title text-[22px] font-black">BD Comp Plan Calculator</div>
-              <div className="brand-subtitle">Accommodations Plus International</div>
+            <div className="header-tagline">
+              Providing the best and most efficient layover experience for your crew and passengers.
             </div>
           </div>
-          <div className="app-actions menu-panel flex flex-wrap items-center gap-2">
+          <div className="app-actions menu-panel ui-row">
             <Btn on={() => setTab("INPUTS")} active={tab === "INPUTS"}>
               Inputs
             </Btn>
@@ -871,7 +868,7 @@ function AppInner() {
             </Btn>
             <Btn on={() => void doCopy()}>Copy JSON</Btn>
             {copyMsg ? (
-              <div role="status" aria-live="polite" style={{ ...UI.pill, background: "var(--surface)" }} className="text-xs font-extrabold">
+              <div role="status" aria-live="polite" className="ui-pill ui-pill-surface text-xs font-extrabold">
                 {copyMsg}
               </div>
             ) : null}
@@ -881,19 +878,6 @@ function AppInner() {
               aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               aria-pressed={theme === "dark"}
               title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 34,
-                height: 34,
-                borderRadius: 999,
-                border: "1px solid var(--border)",
-                background: "var(--surface)",
-                color: "var(--text)",
-                cursor: "pointer",
-                fontSize: 16
-              }}
             >
               {theme === "dark" ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -910,20 +894,20 @@ function AppInner() {
         </div>
 
         {tab === "INPUTS" ? (
-          <div className="grid gap-3">
+          <div className="ui-grid">
             {Card({
               t: "Comp Plan Controls",
               c: (
-                <div className="grid gap-3">
-                  <div className="grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+                <div className="ui-grid">
+                  <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                     <Field l="Plan Year">
                       <Num v={s.planYear} set={(v) => setState({ planYear: v })} />
                     </Field>
                   </div>
-                  <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
-                    <div style={UI.box}>
-                      <div className="mb-2 font-extrabold">Quota Achievement</div>
-                      <div className="grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+                  <div className="ui-grid [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">Quota Achievement</div>
+                      <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                         <Field l="Quota Room Nights">
                           <RN v={s.quota} set={(v) => setState({ quota: v })} />
                         </Field>
@@ -931,17 +915,17 @@ function AppInner() {
                           <RN v={s.booked} set={(v) => setState({ booked: v })} />
                         </Field>
                       </div>
-                      <div className="mt-2.5 grid gap-1.5 text-[13px]">
+                      <div className="mt-2.5 ui-stack ui-text-13">
                         <div className="flex justify-between">
-                          <span className="text-[var(--text-muted)]">Achievement</span>
+                          <span className="ui-text-muted">Achievement</span>
                           <b>{pct(quota.achievement)}</b>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-[var(--text-muted)]">Factor</span>
+                          <span className="ui-text-muted">Factor</span>
                           <b>{pct(quota.factor)}</b>
                         </div>
-                        <div className="text-xs text-[var(--text-muted)]">{quota.note}</div>
-                        <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                        <div className="ui-text-xs ui-text-muted">{quota.note}</div>
+                        <label className="flex items-center gap-2 ui-text-xs ui-text-muted">
                           <input
                             type="checkbox"
                             checked={s.includeQuotaInPayoutSchedule}
@@ -952,9 +936,9 @@ function AppInner() {
                       </div>
                     </div>
 
-                    <div style={UI.box}>
-                      <div className="mb-2 font-extrabold">KPI Gate</div>
-                      <div className="grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">KPI Gate</div>
+                      <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                         <Field l="KPI: New Annualized Room Nights">
                           <RN v={s.kpiRN} set={(v) => setState({ kpiRN: v })} />
                         </Field>
@@ -962,12 +946,12 @@ function AppInner() {
                           <USD v={s.kpiRev} set={(v) => setState({ kpiRev: v })} />
                         </Field>
                       </div>
-                      <div className="mt-2.5 grid gap-1.5 text-[13px]">
+                      <div className="mt-2.5 ui-stack ui-text-13">
                         <div className="flex justify-between">
-                          <span className="text-[var(--text-muted)]">KPI</span>
+                          <span className="ui-text-muted">KPI</span>
                           <b>{kpiOk ? "Eligible" : "Not Eligible"}</b>
                         </div>
-                        <div className="text-xs text-[var(--text-muted)]">
+                        <div className="ui-text-xs ui-text-muted">
                           Eligibility requires either 50,000 new client annualized room nights/trips or $500,000 in new client annualized revenue (any line of business).
                         </div>
                       </div>
@@ -981,7 +965,7 @@ function AppInner() {
               t: "New Contracts (Sign-On)",
               r: <Btn on={addContract}>Add Contract</Btn>,
               c: (
-                <div className="grid gap-3">
+                <div className="ui-grid">
                   {cRank.map((c: any) => {
                     const isSD = c.type === "SD_ACCOUNT";
                     const minT = c.type === "NETWORK_GTA" ? 2 : 1;
@@ -991,16 +975,16 @@ function AppInner() {
                       after = pre * quota.factor;
                     const timing = computeContractTiming(cfg, c, c.rank ?? null, pre);
                     return (
-                      <div key={c.id} style={UI.box}>
-                        <div className="flex flex-wrap items-center justify-between gap-2.5">
-                          <input className="control-input flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm font-extrabold text-[var(--text)] min-w-[260px]" value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} />
-                          <div className="flex flex-wrap items-center gap-2">
+                      <div key={c.id} className="ui-box">
+                        <div className="ui-row-space">
+                          <input className="ui-input flex-1 font-extrabold min-w-[260px]" value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} />
+                          <div className="ui-row">
                             <Btn on={() => delContract(c.id)}>Remove</Btn>
                           </div>
                         </div>
-                        {r.warnings?.length ? <div className="mt-2 text-xs text-[var(--text-muted)]">{r.warnings.join(" · ")}</div> : null}
+                        {r.warnings?.length ? <div className="mt-2 ui-text-xs ui-text-muted">{r.warnings.join(" · ")}</div> : null}
 
-                        <div className="mt-2.5 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+                        <div className="mt-2.5 ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                           <Field l="Contract Type">
                             <Sel
                               v={c.type}
@@ -1031,10 +1015,10 @@ function AppInner() {
                             <div />
                           )}
                           <Field l="Term Years">
-                            <div className="grid gap-1">
+                            <div className="ui-stack">
                               <Num v={c.termYears} set={(v) => setContract(c.id, { termYears: v })} min={1} disabled={termLockedByScenario} />
                               {termLockedByScenario ? (
-                                <div className="text-xs text-[var(--text-muted)]">Disabled for non-standard scenarios because payout uses scenario-defined years.</div>
+                                <div className="ui-text-xs ui-text-muted">Disabled for non-standard scenarios because payout uses scenario-defined years.</div>
                               ) : null}
                             </div>
                           </Field>
@@ -1061,10 +1045,10 @@ function AppInner() {
                             <PctIn v={c.bdShare} set={(v) => setContract(c.id, { bdShare: v })} />
                           </Field>
                           <Field l="Contract Execution Date">
-                            <input className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]" type="date" value={c.startDate} onChange={(e) => setContract(c.id, { startDate: e.target.value })} />
+                            <input className="ui-input" type="date" value={c.startDate} onChange={(e) => setContract(c.id, { startDate: e.target.value })} />
                           </Field>
                           <Field l="Close Date">
-                            <input className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]" type="date" value={c.closeDate} onChange={(e) => setContract(c.id, { closeDate: e.target.value })} />
+                            <input className="ui-input" type="date" value={c.closeDate} onChange={(e) => setContract(c.id, { closeDate: e.target.value })} />
                           </Field>
                           {!isSD ? (
                             <Field l="Payout Model">
@@ -1119,16 +1103,16 @@ function AppInner() {
                           )}
                         </div>
 
-                        <div style={{ ...UI.box, background: "var(--surface-alt)" }} className="mt-2.5">
-                          <div className="text-xs font-extrabold text-[var(--text-muted)]">Timing Preview</div>
-                          <div className="mt-2 grid gap-1.5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+                        <div className="ui-box ui-box-alt mt-2.5">
+                          <div className="ui-text-xs ui-text-muted ui-title">Timing Preview</div>
+                          <div className="mt-2 ui-stack [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
                             {timing.map((t: any, i: number) => (
                               <div
                                 key={i}
-                                className="flex justify-between gap-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-[13px]"
+                                className="ui-row-space ui-surface px-2.5 py-2 ui-text-13"
                               >
                                 <div className="min-w-0 flex-1">
-                                  <b>{t.date || "(No Date)"}</b> <span className="text-[var(--text-muted)]">{t.label}</span>
+                                  <b>{t.date || "(No Date)"}</b> <span className="ui-text-muted">{t.label}</span>
                                 </div>
                                 <div>
                                   <b>{money(t.amount)}</b>
@@ -1148,9 +1132,9 @@ function AppInner() {
               t: "Covered Accounts (Recurrent)",
               r: <Btn on={addAcct}>Add Account</Btn>,
               c: (
-                <div className="grid gap-2">
+                <div className="ui-grid-tight">
                   {s.accts.length ? (
-                    <div className="account-grid account-grid--header mb-1 items-center gap-2 text-xs text-[var(--text-muted)]">
+                    <div className="account-grid account-grid--header mb-1 items-center gap-2 ui-text-xs ui-text-muted">
                       <div />
                       <div>Account Name</div>
                       <div>Managed By</div>
@@ -1162,35 +1146,35 @@ function AppInner() {
                   ) : null}
                   {s.accts.map((a) => (
                     <div key={a.id} className="account-grid account-grid--row grid items-center gap-2">
-                      <label className="flex items-center gap-1.5 text-[13px]">
+                      <label className="flex items-center gap-1.5 ui-text-13">
                         <input type="checkbox" checked={a.include} onChange={(e) => setAcct(a.id, { include: e.target.checked })} /> include
                       </label>
-                      <input className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]" aria-label="Account Name" value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} />
+                      <input className="ui-input" aria-label="Account Name" value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} />
                       <Sel v={a.managedBy} set={(v: any) => setAcct(a.id, { managedBy: v })}>
                         <option value="AM">AM</option>
                         <option value="SD">SD</option>
                       </Sel>
                       <USD v={a.projectedRevenue} set={(v) => setAcct(a.id, { projectedRevenue: v })} />
                       <USD v={a.actualRevenue} set={(v) => setAcct(a.id, { actualRevenue: v })} />
-                      <input className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]" aria-label="Notes" value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} />
+                      <input className="ui-input" aria-label="Notes" value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} />
                       <Btn on={() => delAcct(a.id)}>Remove</Btn>
                     </div>
                   ))}
-                  <div className="mt-2 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
-                    <div style={UI.box}>
-                      <div className="text-xs text-[var(--text-muted)]">Projected Total</div>
-                      <div className="text-lg font-black">{money(recurrent.pTot)}</div>
+                  <div className="mt-2 ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
+                    <div className="ui-box">
+                      <div className="ui-text-xs ui-text-muted">Projected Total</div>
+                      <div className="ui-stat">{money(recurrent.pTot)}</div>
                     </div>
-                    <div style={UI.box}>
-                      <div className="text-xs text-[var(--text-muted)]">Actual Total</div>
-                      <div className="text-lg font-black">{money(recurrent.aTot)}</div>
+                    <div className="ui-box">
+                      <div className="ui-text-xs ui-text-muted">Actual Total</div>
+                      <div className="ui-stat">{money(recurrent.aTot)}</div>
                     </div>
-                    <div style={UI.box}>
-                      <div className="text-xs text-[var(--text-muted)]">Eligibility</div>
-                      <div className="text-lg font-black">{recurrent.kpiOk ? "Eligible" : "Not eligible"}</div>
+                    <div className="ui-box">
+                      <div className="ui-text-xs ui-text-muted">Eligibility</div>
+                      <div className="ui-stat">{recurrent.kpiOk ? "Eligible" : "Not eligible"}</div>
                     </div>
                   </div>
-                  {cfg.rb.length === 0 ? <div className="text-xs text-[var(--text-muted)]">Recurrent bonus bands not configured. Add them in Settings JSON (cfg.rb).</div> : null}
+                  {cfg.rb.length === 0 ? <div className="ui-text-xs ui-text-muted">Recurrent bonus bands not configured. Add them in Settings JSON (cfg.rb).</div> : null}
                 </div>
               )
             })}
@@ -1198,11 +1182,11 @@ function AppInner() {
             {Card({
               t: "SPIFFs",
               c: (
-                <div className="grid gap-3">
-                  <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
-                    <div style={UI.box}>
-                      <div className="mb-2 font-extrabold">SPIFF 1: ABX Account Plans</div>
-                      <div className="grid gap-2.5">
+                <div className="ui-grid">
+                  <div className="ui-grid [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">SPIFF 1: ABX Account Plans</div>
+                      <div className="ui-grid-tight">
                         <Field l="A Accounts Total">
                           <Num v={s.sp.aTot} set={(v) => setState({ sp: { ...s.sp, aTot: v } })} />
                         </Field>
@@ -1215,42 +1199,42 @@ function AppInner() {
                         <Field l="B Plans Completed By Dec 31">
                           <Num v={s.sp.bDone} set={(v) => setState({ sp: { ...s.sp, bDone: v } })} />
                         </Field>
-                        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] p-2.5">
-                          <div className="text-xs text-[var(--text-muted)]">SPIFF 1</div>
-                          <div className="text-lg font-black">{money(spiff.s1)}</div>
+                        <div className="ui-surface-alt p-2.5">
+                          <div className="ui-text-xs ui-text-muted">SPIFF 1</div>
+                          <div className="ui-stat">{money(spiff.s1)}</div>
                         </div>
                       </div>
                     </div>
-                    <div style={UI.box}>
-                      <div className="mb-2 font-extrabold">SPIFF 2: Engagement Strategy</div>
-                      <div className="grid gap-2.5">
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">SPIFF 2: Engagement Strategy</div>
+                      <div className="ui-grid-tight">
                         <Field l="Engagement A Accounts Completed By Sep 30">
                           <Num v={s.sp.engDone} set={(v) => setState({ sp: { ...s.sp, engDone: v } })} />
                         </Field>
-                        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] p-2.5">
-                          <div className="text-xs text-[var(--text-muted)]">SPIFF 2 eligible?</div>
-                          <div className="text-lg font-black">{spiff.s2ok ? "Yes" : "No"}</div>
-                          <div className="text-xs text-[var(--text-muted)]">Threshold: {spiff.thr}</div>
+                        <div className="ui-surface-alt p-2.5">
+                          <div className="ui-text-xs ui-text-muted">SPIFF 2 eligible?</div>
+                          <div className="ui-stat">{spiff.s2ok ? "Yes" : "No"}</div>
+                          <div className="ui-text-xs ui-text-muted">Threshold: {spiff.thr}</div>
                         </div>
                       </div>
                     </div>
-                    <div style={UI.box}>
-                      <div className="mb-2 font-extrabold">SPIFF 3: Workshops</div>
-                      <div className="grid gap-2.5">
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">SPIFF 3: Workshops</div>
+                      <div className="ui-grid-tight">
                         <Field l="Workshops A Accounts Completed By Dec 31">
                           <Num v={s.sp.wkDone} set={(v) => setState({ sp: { ...s.sp, wkDone: v } })} />
                         </Field>
-                        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] p-2.5">
-                          <div className="text-xs text-[var(--text-muted)]">SPIFF 3 eligible?</div>
-                          <div className="text-lg font-black">{spiff.s3ok ? "Yes" : "No"}</div>
+                        <div className="ui-surface-alt p-2.5">
+                          <div className="ui-text-xs ui-text-muted">SPIFF 3 eligible?</div>
+                          <div className="ui-stat">{spiff.s3ok ? "Yes" : "No"}</div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <label className="flex items-center gap-2 text-[13px]">
+                  <label className="flex items-center gap-2 ui-text-13">
                     <input type="checkbox" checked={s.sp.all3} onChange={(e) => setState({ sp: { ...s.sp, all3: e.target.checked } })} /> All 3 SPIFFs Completed Within 12 Months
                   </label>
-                  <div style={UI.box} className="flex flex-wrap justify-between gap-2.5">
+                  <div className="ui-box flex flex-wrap justify-between gap-2.5">
                     <b>SPIFF total</b>
                     <b>{money(spiff.tot)}</b>
                   </div>
@@ -1261,71 +1245,70 @@ function AppInner() {
         ) : null}
 
         {tab === "RESULTS" ? (
-          <div className="grid gap-3">
-            <div className="grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
-              <div style={UI.box}>
-                <div className="text-xs text-[var(--text-muted)]">Sign-On (Before Quota)</div>
-                <div className="text-lg font-black">{money(totals.pre)}</div>
+          <div className="ui-grid">
+            <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">Sign-On (Before Quota)</div>
+                <div className="ui-stat">{money(totals.pre)}</div>
               </div>
-              <div style={UI.box}>
-                <div className="text-xs text-[var(--text-muted)]">Sign-On (After Quota)</div>
-                <div className="text-lg font-black">{money(totals.after)}</div>
-                <div className="text-xs text-[var(--text-muted)]">{quotaVarianceLabel}</div>
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">Sign-On (After Quota)</div>
+                <div className="ui-stat">{money(totals.after)}</div>
+                <div className="ui-text-xs ui-text-muted">{quotaVarianceLabel}</div>
               </div>
-              <div style={UI.box}>
-                <div className="text-xs text-[var(--text-muted)]">Recurrent (Actual)</div>
-                <div className="text-lg font-black">{money(totals.rec)}</div>
-                <div className="text-xs text-[var(--text-muted)]">{recurrent.kpiOk ? "KPI Eligible" : "Not eligible"}</div>
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">Recurrent (Actual)</div>
+                <div className="ui-stat">{money(totals.rec)}</div>
+                <div className="ui-text-xs ui-text-muted">{recurrent.kpiOk ? "KPI Eligible" : "Not eligible"}</div>
               </div>
-              <div style={UI.box}>
-                <div className="text-xs text-[var(--text-muted)]">SPIFF</div>
-                <div className="text-lg font-black">{money(totals.sp)}</div>
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">SPIFF</div>
+                <div className="ui-stat">{money(totals.sp)}</div>
               </div>
-              <div style={UI.box}>
-                <div className="text-xs text-[var(--text-muted)]">Total</div>
-                <div className="text-lg font-black">{money(totals.all)}</div>
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">Total</div>
+                <div className="ui-stat">{money(totals.all)}</div>
               </div>
             </div>
             {Card({
               t: "Payout Schedule - subject to annual room quota been met",
-              r: <div className="flex flex-wrap gap-2">{showCsv ? <Btn on={() => setShowCsv(false)}>Hide CSV</Btn> : <Btn on={showCSV} active>Show CSV</Btn>}</div>,
+              r: <div className="ui-row">{showCsv ? <Btn on={() => setShowCsv(false)}>Hide CSV</Btn> : <Btn on={showCSV} active>Show CSV</Btn>}</div>,
               c: (
-                <div className="grid gap-2.5">
+                <div className="ui-grid-tight">
                   {showCsv && csvText ? (
-                    <div style={{ ...UI.box, background: "var(--surface-alt)" }}>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-xs font-extrabold text-[var(--text-muted)]">CSV Output</div>
-                        <div className="flex flex-wrap gap-2">
+                    <div className="ui-box ui-box-alt">
+                      <div className="ui-row-space">
+                        <div className="ui-text-xs ui-text-muted ui-title">CSV Output</div>
+                        <div className="ui-row">
                           <Btn on={selectCSV}>Select CSV</Btn>
                         </div>
                       </div>
-                      <div className="mt-2 text-xs text-[var(--text-muted)]">Copy all text and save as a .csv file, then open in Excel.</div>
+                      <div className="mt-2 ui-text-xs ui-text-muted">Copy all text and save as a .csv file, then open in Excel.</div>
                       <textarea
-                        className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 font-mono text-xs text-[var(--text)]"
+                        className="mt-2 h-[180px] ui-input font-mono ui-text-xs"
                         ref={csvRef}
                         value={csvText}
                         readOnly
-                        style={{ height: 180 }}
                       />
                     </div>
                   ) : null}
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-[13px]">
+                    <table className="w-full border-collapse ui-text-13">
                       <thead>
-                        <tr className="font-semibold text-[var(--section-title)]/85">
-                          <th className="p-2 text-center">Date</th>
-                          <th className="p-2 text-center">Category</th>
-                          <th className="p-2 text-center">Source</th>
-                          <th className="p-2 text-center">Label</th>
-                          <th className="p-2 text-center">Amount</th>
-                          <th className="p-2 text-center">Status</th>
+                        <tr className="ui-title text-[var(--section-title)]/85">
+                          <th className="p-2 text-center ui-text-13">Date</th>
+                          <th className="p-2 text-center ui-text-13">Category</th>
+                          <th className="p-2 text-center ui-text-13">Source</th>
+                          <th className="p-2 text-center ui-text-13">Label</th>
+                          <th className="p-2 text-center ui-text-13">Amount</th>
+                          <th className="p-2 text-center ui-text-13">Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {eventRows.map((e) => {
                           const status = getStatus(e.key);
                           return (
-                        <tr key={e.key} className="border-t border-[var(--border)]" style={rowStyle(status)}>
+                        <tr key={e.key} className="payout-row border-t border-[var(--border)]" data-status={status}>
                             <td className="p-2 font-extrabold">{e.date || "(No Date)"}</td>
                             <td className="p-2">{e.category}</td>
                             <td className="p-2">{e.source}</td>
@@ -1333,31 +1316,11 @@ function AppInner() {
                             <td className="p-2 text-right font-black">{money(e.amount)}</td>
                             <td className="p-2 text-center">
                               <select
-                                className="mx-auto block rounded-full border px-2 py-1 text-xs font-bold"
+                                className="status-select mx-auto block rounded-full border px-2 py-1 text-xs font-bold"
                                 value={status}
                                 onChange={(ev) => setStatus(e.key, ev.target.value as PayoutStatus)}
                                 aria-label={`Payout status for ${e.source} ${e.label}`}
-                                style={{
-                                  minWidth: 120,
-                                  borderColor:
-                                    status === "TO_BE_PAID"
-                                      ? "#22c55e"
-                                      : status === "PAID"
-                                        ? "var(--border)"
-                                        : theme === "dark"
-                                          ? "#64748b"
-                                          : "#94a3b8",
-                                  background:
-                                    status === "TO_BE_PAID"
-                                      ? theme === "dark"
-                                        ? "rgba(34, 197, 94, 0.2)"
-                                        : "rgba(34, 197, 94, 0.14)"
-                                      : status === "PAID"
-                                        ? "var(--surface)"
-                                        : theme === "dark"
-                                        ? "rgba(148, 163, 184, 0.12)"
-                                        : "rgba(148, 163, 184, 0.16)"
-                                }}
+                                data-status={status}
                               >
                                 <option value="TO_BE_PAID">{PAYOUT_STATUS_LABEL.TO_BE_PAID}</option>
                                 <option value="PAID">{PAYOUT_STATUS_LABEL.PAID}</option>
@@ -1369,7 +1332,7 @@ function AppInner() {
                         })}
                         {eventRows.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="p-2.5 text-[var(--text-muted)]">
+                            <td colSpan={6} className="p-2.5 ui-text-muted">
                               No Payouts Yet.
                             </td>
                           </tr>
@@ -1384,15 +1347,15 @@ function AppInner() {
         ) : null}
 
         {tab === "SETTINGS" ? (
-          <div className="grid gap-3">
+          <div className="ui-grid">
             {Card({
               t: "Settings JSON",
               r: (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="ui-row">
                   <Btn on={() => void doCopy()}>Copy</Btn>
                   <Btn on={apply}>Apply</Btn>
                   {copyMsg ? (
-                    <div role="status" aria-live="polite" style={{ ...UI.pill, background: "var(--surface)" }} className="text-xs font-extrabold">
+                    <div role="status" aria-live="polite" className="ui-pill ui-pill-surface ui-text-xs font-extrabold">
                       {copyMsg}
                     </div>
                   ) : null}
@@ -1400,11 +1363,10 @@ function AppInner() {
               ),
               c: (
                 <textarea
-                  className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 font-mono text-xs text-[var(--text)]"
+                  className="h-[520px] ui-input font-mono ui-text-xs"
                   ref={settingsRef}
                   value={j}
                   onChange={(e) => setJ(e.target.value)}
-                  style={{ height: 520 }}
                 />
               )
             })}
@@ -1412,17 +1374,17 @@ function AppInner() {
         ) : null}
 
         {tab === "HELP" ? (
-          <div className="grid gap-3">
+          <div className="ui-grid">
             {Card({
               t: "How This Calculator Works",
               c: (
-                <div className="grid gap-2.5 text-sm leading-6">
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     This tool estimates total BD compensation by combining three payout types: Sign-On, Recurrent, and SPIFFs. The flow is simple:
                     enter inputs, review results, and export the payout schedule if needed.
                   </div>
-                  <div style={{ ...UI.box, background: "var(--surface-alt)" }}>
-                    <div className="mb-1.5 font-extrabold">Quick Flow</div>
+                  <div className="ui-box ui-box-alt">
+                    <div className="mb-1.5 ui-title">Quick Flow</div>
                     <div>1) Inputs: enter plan controls, contracts, accounts, and SPIFF progress.</div>
                     <div>2) Results: review totals and payout schedule.</div>
                     <div>3) Settings: adjust bands and rates only if you are a plan admin.</div>
@@ -1434,7 +1396,7 @@ function AppInner() {
             {Card({
               t: "Plan Controls",
               c: (
-                <div className="grid gap-2 text-sm leading-6">
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     <b>Plan Year</b> drives all payout dates (year-end or following year where applicable).
                   </div>
@@ -1451,7 +1413,7 @@ function AppInner() {
             {Card({
               t: "New Contracts (Sign-On)",
               c: (
-                <div className="grid gap-2 text-sm leading-6">
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     Add each new contract and enter the contract type, term, room nights (or annualized revenue for SD), BD share, and relevant dates.
                   </div>
@@ -1475,7 +1437,7 @@ function AppInner() {
             {Card({
               t: "Covered Accounts (Recurrent)",
               c: (
-                <div className="grid gap-2 text-sm leading-6">
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     Add each covered account, set Projected and Actual revenue, and mark whether it should be included.
                   </div>
@@ -1492,7 +1454,7 @@ function AppInner() {
             {Card({
               t: "SPIFFs",
               c: (
-                <div className="grid gap-2 text-sm leading-6">
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     SPIFF 1 is based on completed ABX account plans. SPIFF 2 is based on engagement strategy completion, and SPIFF 3 is based on completed workshops (capped).
                   </div>
@@ -1506,7 +1468,7 @@ function AppInner() {
             {Card({
               t: "Results and CSV Export",
               c: (
-                <div className="grid gap-2 text-sm leading-6">
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     Results show totals for Sign-On, Recurrent, SPIFFs, and the overall total. The Payout Schedule lists all payments by date and category.
                   </div>
@@ -1520,7 +1482,7 @@ function AppInner() {
             {Card({
               t: "Settings JSON (Admin Use)",
               c: (
-                <div className="grid gap-2 text-sm leading-6">
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     Settings contain rate tables and bonus bands. Only plan admins should edit these values.
                   </div>
@@ -1536,7 +1498,7 @@ function AppInner() {
               c: (
                 <div className="text-sm leading-6">
                   Developed by Esteban Candamo (2026).
-                  <div className="mt-1.5 text-[13px] text-[var(--text-muted)]">
+                  <div className="mt-1.5 ui-text-13 ui-text-muted">
                     Restricted to authorized employees of Accommodations Plus International.
                   </div>
                 </div>
@@ -1545,7 +1507,7 @@ function AppInner() {
           </div>
         ) : null}
 
-        <div className="mt-1.5 text-center text-xs text-[var(--text-muted)]">
+        <div className="mt-1.5 text-center ui-text-xs ui-text-muted">
           Restricted to authorized employees of Accommodations Plus International. © 2026 Esteban Candamo. All rights reserved.
         </div>
       </div>
