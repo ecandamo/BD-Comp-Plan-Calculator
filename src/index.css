@@ -381,9 +381,10 @@ textarea:focus-visible {
 
 .brand-subtitle {
   margin-bottom: 2px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  line-height: 1rem;
   text-transform: uppercase;
   color: rgba(139, 199, 87, 0.95);
 }

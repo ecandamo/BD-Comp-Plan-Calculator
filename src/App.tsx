@@ -845,7 +845,7 @@ function AppInner() {
                 <img className="brand-logo" src={headerLogoSrc} alt="Accommodations Plus International logo" />
               </div>
               <div>
-                <div className="brand-subtitle">API Global Solutions</div>
+                <div className="brand-subtitle">API GLOBAL SOLUTIONS</div>
                 <div className="app-title text-[22px] font-black">BD Comp Plan Calculator</div>
               </div>
             </div>
