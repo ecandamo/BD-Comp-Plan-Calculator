@@ -33,6 +33,8 @@
   --section-title: var(--brand-primary);
   --shadow-card: 0 8px 24px rgba(39, 59, 110, 0.09), 0 2px 6px rgba(16, 24, 40, 0.04);
   --focus-ring: 0 0 0 3px rgba(39, 59, 110, 0.15);
+  --status-to-be-paid-rgb: 34, 197, 94;
+  --status-pending-rgb: 245, 158, 11;
   --radius-xl: 18px;
   --radius-lg: 14px;
   --radius-md: 12px;
@@ -76,7 +78,7 @@ body {
     radial-gradient(circle at top left, rgba(120, 188, 67, 0.22), transparent 28%),
     radial-gradient(circle at top right, rgba(39, 59, 110, 0.22), transparent 32%),
     linear-gradient(180deg, #eff4fb 0%, #f6f8fc 35%, #eef1f6 100%);
-  color: var(--brand-ink);
+  color: var(--text);
 }
 
 ::selection {
@@ -185,7 +187,7 @@ textarea:focus-visible {
 }
 
 .ui-text-13 {
-  font-size: 13px;
+  font-size: 0.75rem;
 }
 
 .ui-title {
@@ -222,25 +224,26 @@ textarea:focus-visible {
 
 .payout-row[data-status="PAID"] {
   background: var(--surface-alt);
-  opacity: 0.66;
+  color: var(--text-muted);
 }
 
 .payout-row[data-status="PENDING"] {
-  background: rgba(148, 163, 184, 0.12);
-  opacity: 0.84;
+  background: rgba(var(--status-pending-rgb), 0.12);
+  border-left: 3px dashed rgba(var(--status-pending-rgb), 0.7);
 }
 
 .payout-row[data-status="TO_BE_PAID"] {
-  background: rgba(34, 197, 94, 0.12);
-  box-shadow: inset 3px 0 0 rgba(34, 197, 94, 0.75);
+  background: rgba(var(--status-to-be-paid-rgb), 0.12);
+  box-shadow: inset 3px 0 0 rgba(var(--status-to-be-paid-rgb), 0.75);
 }
 
 [data-theme="dark"] .payout-row[data-status="PENDING"] {
-  background: rgba(148, 163, 184, 0.10);
+  background: rgba(var(--status-pending-rgb), 0.16);
+  border-left-color: rgba(var(--status-pending-rgb), 0.6);
 }
 
 [data-theme="dark"] .payout-row[data-status="TO_BE_PAID"] {
-  background: rgba(34, 197, 94, 0.16);
+  background: rgba(var(--status-to-be-paid-rgb), 0.16);
 }
 
 .status-select {
@@ -248,8 +251,8 @@ textarea:focus-visible {
 }
 
 .status-select[data-status="TO_BE_PAID"] {
-  border-color: #22c55e;
-  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(var(--status-to-be-paid-rgb), 1);
+  background: rgba(var(--status-to-be-paid-rgb), 0.14);
 }
 
 .status-select[data-status="PAID"] {
@@ -258,17 +261,17 @@ textarea:focus-visible {
 }
 
 .status-select[data-status="PENDING"] {
-  border-color: #94a3b8;
-  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(var(--status-pending-rgb), 1);
+  background: rgba(var(--status-pending-rgb), 0.16);
 }
 
 [data-theme="dark"] .status-select[data-status="TO_BE_PAID"] {
-  background: rgba(34, 197, 94, 0.2);
+  background: rgba(var(--status-to-be-paid-rgb), 0.2);
 }
 
 [data-theme="dark"] .status-select[data-status="PENDING"] {
-  border-color: #64748b;
-  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(var(--status-pending-rgb), 1);
+  background: rgba(var(--status-pending-rgb), 0.2);
 }
 
 .app-shell::before {
@@ -293,6 +296,7 @@ textarea:focus-visible {
 }
 
 .header-bar {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
@@ -396,6 +400,30 @@ textarea:focus-visible {
   color: rgba(227, 234, 248, 0.95);
 }
 
+.header-theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #f7fbff;
+  box-shadow: 0 10px 24px rgba(10, 18, 38, 0.25);
+}
+
+.header-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+[data-theme="dark"] .header-theme-toggle {
+  background: rgba(12, 18, 34, 0.35);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f8fbff;
+}
+
+[data-theme="dark"] .header-theme-toggle:hover {
+  background: rgba(12, 18, 34, 0.5);
+}
+
 [data-theme="dark"] .app-header {
   background: none;
 }
@@ -463,5 +491,10 @@ textarea:focus-visible {
 
   .header-tagline {
     max-width: none;
+  }
+
+  .header-theme-toggle {
+    top: 12px;
+    right: 12px;
   }
 }
