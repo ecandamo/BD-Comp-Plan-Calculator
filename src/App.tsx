@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Btn, Card, Field, InfoTip, Num, Sel, UI } from "./components/ui";
 
 const uid = () => Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
 const n = (v: any) => {
@@ -498,128 +499,6 @@ export const buildPayoutCSV = (rows: Array<EventRow & { status?: string }>) => {
   return [head, ...lines].join(NL);
 };
 
-const S = {
-  wrap: { minHeight: "100vh", background: "var(--bg)", color: "var(--text)" },
-  box: { border: "1px solid var(--border)", borderRadius: 16, padding: 12, background: "var(--surface)" },
-  pill: { padding: "6px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--pill)" },
-  inp: { width: "100%", padding: "8px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" },
-  btn: { padding: "8px 10px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontWeight: 600 }
-};
-const Card = ({ t, r, c }: { t: string; r?: any; c: any }) => (
-  <div style={S.box}>
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-      <div style={{ fontWeight: 800 }}>{t}</div>
-      {r || null}
-    </div>
-    <div style={{ marginTop: 10 }}>{c}</div>
-  </div>
-);
-const Field = ({ l, children }: { l: React.ReactNode; children: any }) => (
-  <label style={{ display: "block" }}>
-    <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 4 }}>{l}</div>
-    {children}
-  </label>
-);
-const InfoTip = ({ text }: { text: string }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <span
-      style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
-      onBlur={() => setOpen(false)}
-    >
-      <span
-        tabIndex={0}
-        aria-label="Info"
-        style={{
-          width: 16,
-          height: 16,
-          borderRadius: "50%",
-          border: "1px solid #cbd5e1",
-          color: "#64748b",
-          fontSize: 11,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "help",
-          marginLeft: 6,
-          userSelect: "none"
-        }}
-      >
-        i
-      </span>
-      {open ? (
-        <span
-          style={{
-            position: "absolute",
-            top: "120%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "#0f172a",
-            color: "#fff",
-            fontSize: 12,
-            padding: "6px 8px",
-            borderRadius: 8,
-            whiteSpace: "normal",
-            zIndex: 1000,
-            boxShadow: "0 8px 20px rgba(15, 23, 42, 0.25)",
-            width: 450,
-            maxWidth: "90vw"
-          }}
-        >
-          {text.split("\n").map((line, i, arr) => (
-            <div
-              key={i}
-              style={{
-                marginBottom: i === arr.length - 1 ? 0 : 4,
-                lineHeight: 1.3
-              }}
-            >
-              {line.includes(":") ? (
-                <>
-                  <b>{line.split(":")[0]}:</b>
-                  {line.slice(line.indexOf(":") + 1)}
-                </>
-              ) : (
-                line
-              )}
-            </div>
-          ))}
-        </span>
-      ) : null}
-    </span>
-  );
-};
-const Btn = ({ on, children, active }: { on: () => void; children: any; active?: boolean }) => {
-  const [h, setH] = useState(false);
-  const onv = active || h;
-  return (
-    <button
-      onClick={on}
-      onMouseEnter={() => setH(true)}
-      onMouseLeave={() => setH(false)}
-      style={{
-        ...S.btn,
-        cursor: "pointer",
-        background: onv ? "var(--accent)" : "var(--surface)",
-        color: onv ? "var(--accent-contrast)" : "var(--text)",
-        borderColor: onv ? "var(--accent)" : "var(--border)"
-      }}
-    >
-      {children}
-    </button>
-  );
-};
-const Sel = ({ v, set, children }: { v: any; set: (x: any) => void; children: any }) => (
-  <select value={v} onChange={(e) => set(e.target.value)} style={S.inp}>
-    {children}
-  </select>
-);
-const Num = ({ v, set, step = 1, min, disabled = false }: { v: any; set: (x: number) => void; step?: number; min?: number; disabled?: boolean }) => (
-  <input type="number" value={Number.isFinite(v) ? v : 0} step={step} min={min} disabled={disabled} onChange={(e) => set(Number(e.target.value))} style={S.inp} />
-);
 const RN = ({ v, set }: { v: number; set: (x: number) => void }) => {
   const [f, setF] = useState(false);
   const [t, setT] = useState(String(v ?? 0));
@@ -628,6 +507,7 @@ const RN = ({ v, set }: { v: number; set: (x: number) => void }) => {
   }, [v, f]);
   return (
     <input
+      className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]"
       type="text"
       inputMode="numeric"
       value={f ? t : fmtI(v)}
@@ -641,7 +521,6 @@ const RN = ({ v, set }: { v: number; set: (x: number) => void }) => {
         setT(raw);
         set(parseRN(raw));
       }}
-      style={S.inp}
     />
   );
 };
@@ -653,6 +532,7 @@ const RNBlank = ({ v, set }: { v: number | ""; set: (x: number | "") => void }) 
   }, [v, f]);
   return (
     <input
+      className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]"
       type="text"
       inputMode="numeric"
       value={f ? t : v === "" ? "" : fmtI(v)}
@@ -667,7 +547,6 @@ const RNBlank = ({ v, set }: { v: number | ""; set: (x: number | "") => void }) 
         if (raw.trim() === "") set("");
         else set(parseRN(raw));
       }}
-      style={S.inp}
     />
   );
 };
@@ -679,6 +558,7 @@ const USD = ({ v, set }: { v: number; set: (x: number) => void }) => {
   }, [v, f]);
   return (
     <input
+      className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]"
       type="text"
       inputMode="decimal"
       value={f ? t : fmt$(v)}
@@ -692,7 +572,6 @@ const USD = ({ v, set }: { v: number; set: (x: number) => void }) => {
         setT(raw);
         set(parseUSD(raw));
       }}
-      style={S.inp}
     />
   );
 };
@@ -700,6 +579,7 @@ const PctIn = ({ v, set }: { v: number; set: (x: number) => void }) => {
   const val = cl(n(v) * 100, 0, 100);
   return (
     <input
+      className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]"
       type="number"
       value={Number.isFinite(val) ? val : 0}
       min={0}
@@ -709,7 +589,6 @@ const PctIn = ({ v, set }: { v: number; set: (x: number) => void }) => {
         const x = cl(Number(e.target.value), 0, 100);
         set(x / 100);
       }}
-      style={S.inp}
     />
   );
 };
@@ -897,18 +776,11 @@ function AppInner() {
       return prevState;
     });
   }, [eventRows]);
+  const headerLogoSrc = theme === "dark" ? "/brand/API-white.svg" : "/brand/API-green-white.svg";
 
   const getStatus = (key: string): PayoutStatus => (s.payoutStatuses?.[key] as PayoutStatus | undefined) ?? "TO_BE_PAID";
   const setStatus = (key: string, status: PayoutStatus) =>
     setS((prev) => ({ ...prev, payoutStatuses: { ...(prev.payoutStatuses ?? {}), [key]: status } }));
-  const rowStyle = (status: PayoutStatus): React.CSSProperties => {
-    if (status === "PAID") return { background: "var(--surface-alt)", opacity: 0.66 };
-    if (status === "PENDING") return { background: theme === "dark" ? "rgba(148, 163, 184, 0.10)" : "rgba(148, 163, 184, 0.12)", opacity: 0.84 };
-    return {
-      background: theme === "dark" ? "rgba(34, 197, 94, 0.16)" : "rgba(34, 197, 94, 0.12)",
-      boxShadow: "inset 3px 0 0 rgba(34, 197, 94, 0.75)"
-    };
-  };
   const doCopy = async () => {
     const txt = JSON.stringify({ cfg, s }, null, 2);
     const ok = await attemptClipboardWrite(txt);
@@ -964,13 +836,42 @@ function AppInner() {
   };
 
   return (
-    <div style={S.wrap}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: 16, display: "grid", gap: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 900 }}>BD Comp Plan Calculator</div>
+    <div className="app-shell min-h-screen ui-wrap">
+      <div className="app-container ui-container">
+        <div className="app-header">
+          <div className="header-bar">
+            <div className="brand-lockup">
+              <div className="brand-logo-wrap">
+                <img className="brand-logo" src={headerLogoSrc} alt="Accommodations Plus International logo" />
+              </div>
+              <div>
+                <div className="brand-subtitle">API GLOBAL SOLUTIONS</div>
+                <div className="app-title text-[22px] font-black">BD Comp Plan Calculator</div>
+              </div>
+            </div>
+            <div className="header-tagline">
+              Providing the best and most efficient layover experience for your crew and passengers.
+            </div>
+            <button
+              className="icon-button header-theme-toggle"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              aria-pressed={theme === "dark"}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            >
+              {theme === "dark" ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M12 2.5v2.3M12 19.2v2.3M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M2.5 12h2.3M19.2 12h2.3M4.8 19.2l1.6-1.6M17.6 6.4l1.6-1.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M20.3 14.5A8.7 8.7 0 1 1 9.5 3.7a7.2 7.2 0 1 0 10.8 10.8Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <div className="app-actions menu-panel ui-row">
             <Btn on={() => setTab("INPUTS")} active={tab === "INPUTS"}>
               Inputs
             </Btn>
@@ -984,45 +885,29 @@ function AppInner() {
               Help
             </Btn>
             <Btn on={() => void doCopy()}>Copy JSON</Btn>
-            {copyMsg ? <div style={{ ...S.pill, background: "var(--surface)", fontSize: 12, fontWeight: 800 }}>{copyMsg}</div> : null}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 34,
-                height: 34,
-                borderRadius: 999,
-                border: "1px solid var(--border)",
-                background: "var(--surface)",
-                color: "var(--text)",
-                cursor: "pointer",
-                fontSize: 16
-              }}
-            >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
+            {copyMsg ? (
+              <div role="status" aria-live="polite" className="ui-pill ui-pill-surface text-xs font-extrabold">
+                {copyMsg}
+              </div>
+            ) : null}
           </div>
         </div>
 
         {tab === "INPUTS" ? (
-          <div style={{ display: "grid", gap: 12 }}>
+          <div className="ui-grid">
             {Card({
               t: "Comp Plan Controls",
               c: (
-                <div style={{ display: "grid", gap: 12 }}>
-                  <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+                <div className="ui-grid">
+                  <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                     <Field l="Plan Year">
                       <Num v={s.planYear} set={(v) => setState({ planYear: v })} />
                     </Field>
                   </div>
-                  <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))" }}>
-                    <div style={S.box}>
-                      <div style={{ fontWeight: 800, marginBottom: 8 }}>Quota Achievement</div>
-                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+                  <div className="ui-grid [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">Quota Achievement</div>
+                      <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                         <Field l="Quota Room Nights">
                           <RN v={s.quota} set={(v) => setState({ quota: v })} />
                         </Field>
@@ -1030,17 +915,17 @@ function AppInner() {
                           <RN v={s.booked} set={(v) => setState({ booked: v })} />
                         </Field>
                       </div>
-                      <div style={{ marginTop: 10, fontSize: 13, display: "grid", gap: 6 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                          <span style={{ opacity: 0.7 }}>Achievement</span>
+                      <div className="mt-2.5 ui-stack ui-text-13">
+                        <div className="flex justify-between">
+                          <span className="ui-text-muted">Achievement</span>
                           <b>{pct(quota.achievement)}</b>
                         </div>
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                          <span style={{ opacity: 0.7 }}>Factor</span>
+                        <div className="flex justify-between">
+                          <span className="ui-text-muted">Factor</span>
                           <b>{pct(quota.factor)}</b>
                         </div>
-                        <div style={{ fontSize: 12, opacity: 0.7 }}>{quota.note}</div>
-                        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, opacity: 0.9 }}>
+                        <div className="ui-text-xs ui-text-muted">{quota.note}</div>
+                        <label className="flex items-center gap-2 ui-text-xs ui-text-muted">
                           <input
                             type="checkbox"
                             checked={s.includeQuotaInPayoutSchedule}
@@ -1051,9 +936,9 @@ function AppInner() {
                       </div>
                     </div>
 
-                    <div style={S.box}>
-                      <div style={{ fontWeight: 800, marginBottom: 8 }}>KPI Gate</div>
-                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">KPI Gate</div>
+                      <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                         <Field l="KPI: New Annualized Room Nights">
                           <RN v={s.kpiRN} set={(v) => setState({ kpiRN: v })} />
                         </Field>
@@ -1061,12 +946,12 @@ function AppInner() {
                           <USD v={s.kpiRev} set={(v) => setState({ kpiRev: v })} />
                         </Field>
                       </div>
-                      <div style={{ marginTop: 10, fontSize: 13, display: "grid", gap: 6 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                          <span style={{ opacity: 0.7 }}>KPI</span>
+                      <div className="mt-2.5 ui-stack ui-text-13">
+                        <div className="flex justify-between">
+                          <span className="ui-text-muted">KPI</span>
                           <b>{kpiOk ? "Eligible" : "Not Eligible"}</b>
                         </div>
-                        <div style={{ fontSize: 12, opacity: 0.7 }}>
+                        <div className="ui-text-xs ui-text-muted">
                           Eligibility requires either 50,000 new client annualized room nights/trips or $500,000 in new client annualized revenue (any line of business).
                         </div>
                       </div>
@@ -1080,7 +965,7 @@ function AppInner() {
               t: "New Contracts (Sign-On)",
               r: <Btn on={addContract}>Add Contract</Btn>,
               c: (
-                <div style={{ display: "grid", gap: 12 }}>
+                <div className="ui-grid">
                   {cRank.map((c: any) => {
                     const isSD = c.type === "SD_ACCOUNT";
                     const minT = c.type === "NETWORK_GTA" ? 2 : 1;
@@ -1090,16 +975,16 @@ function AppInner() {
                       after = pre * quota.factor;
                     const timing = computeContractTiming(cfg, c, c.rank ?? null, pre);
                     return (
-                      <div key={c.id} style={S.box}>
-                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
-                          <input value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} style={{ ...S.inp, flex: "1 1 260px", fontWeight: 800 }} />
-                          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <div key={c.id} className="ui-box">
+                        <div className="ui-row-space">
+                          <input className="ui-input flex-1 font-extrabold min-w-[260px]" value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} />
+                          <div className="ui-row">
                             <Btn on={() => delContract(c.id)}>Remove</Btn>
                           </div>
                         </div>
-                        {r.warnings?.length ? <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>{r.warnings.join(" · ")}</div> : null}
+                        {r.warnings?.length ? <div className="mt-2 ui-text-xs ui-text-muted">{r.warnings.join(" · ")}</div> : null}
 
-                        <div style={{ marginTop: 10, display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+                        <div className="mt-2.5 ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                           <Field l="Contract Type">
                             <Sel
                               v={c.type}
@@ -1130,10 +1015,10 @@ function AppInner() {
                             <div />
                           )}
                           <Field l="Term Years">
-                            <div style={{ display: "grid", gap: 4 }}>
+                            <div className="ui-stack">
                               <Num v={c.termYears} set={(v) => setContract(c.id, { termYears: v })} min={1} disabled={termLockedByScenario} />
                               {termLockedByScenario ? (
-                                <div style={{ fontSize: 12, opacity: 0.75 }}>Disabled for non-standard scenarios because payout uses scenario-defined years.</div>
+                                <div className="ui-text-xs ui-text-muted">Disabled for non-standard scenarios because payout uses scenario-defined years.</div>
                               ) : null}
                             </div>
                           </Field>
@@ -1160,10 +1045,10 @@ function AppInner() {
                             <PctIn v={c.bdShare} set={(v) => setContract(c.id, { bdShare: v })} />
                           </Field>
                           <Field l="Contract Execution Date">
-                            <input type="date" value={c.startDate} onChange={(e) => setContract(c.id, { startDate: e.target.value })} style={S.inp} />
+                            <input className="ui-input" type="date" value={c.startDate} onChange={(e) => setContract(c.id, { startDate: e.target.value })} />
                           </Field>
                           <Field l="Close Date">
-                            <input type="date" value={c.closeDate} onChange={(e) => setContract(c.id, { closeDate: e.target.value })} style={S.inp} />
+                            <input className="ui-input" type="date" value={c.closeDate} onChange={(e) => setContract(c.id, { closeDate: e.target.value })} />
                           </Field>
                           {!isSD ? (
                             <Field l="Payout Model">
@@ -1176,9 +1061,9 @@ function AppInner() {
                             <div />
                           )}
                           {!isSD ? (
-                            <div style={{ gridColumn: "1 / -1" }}>
+                            <div className="col-[1/-1]">
                               <Field l="Payout Scenario">
-                                <div style={{ maxWidth: 640 }}>
+                                <div className="max-w-[640px]">
                                   <Sel
                                     v={c.payoutScenario}
                                     set={(v: PS) =>
@@ -1218,16 +1103,16 @@ function AppInner() {
                           )}
                         </div>
 
-                        <div style={{ marginTop: 10, ...S.box, background: "var(--surface-alt)" }}>
-                          <div style={{ fontSize: 12, fontWeight: 800, opacity: 0.8 }}>Timing Preview</div>
-                          <div style={{ marginTop: 8, display: "grid", gap: 6, gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))" }}>
+                        <div className="ui-box ui-box-alt mt-2.5">
+                          <div className="ui-text-xs ui-text-muted ui-title">Timing Preview</div>
+                          <div className="mt-2 ui-stack [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
                             {timing.map((t: any, i: number) => (
                               <div
                                 key={i}
-                                style={{ display: "flex", justifyContent: "space-between", gap: 10, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px 10px", fontSize: 13 }}
+                                className="ui-row-space ui-surface px-2.5 py-2 ui-text-13"
                               >
-                                <div style={{ minWidth: 0, flex: 1 }}>
-                                  <b>{t.date || "(No Date)"}</b> <span style={{ opacity: 0.7 }}>{t.label}</span>
+                                <div className="min-w-0 flex-1">
+                                  <b>{t.date || "(No Date)"}</b> <span className="ui-text-muted">{t.label}</span>
                                 </div>
                                 <div>
                                   <b>{money(t.amount)}</b>
@@ -1247,20 +1132,9 @@ function AppInner() {
               t: "Covered Accounts (Recurrent)",
               r: <Btn on={addAcct}>Add Account</Btn>,
               c: (
-                <div style={{ display: "grid", gap: 8 }}>
+                <div className="ui-grid-tight">
                   {s.accts.length ? (
-                    <div
-                      style={{
-                        display: "grid",
-                        gap: 8,
-                        gridTemplateColumns: "110px 1fr 140px 160px 160px 1fr 110px",
-                        alignItems: "center",
-                        fontSize: 12,
-                        fontWeight: 400,
-                        opacity: 0.75,
-                        marginBottom: 4
-                      }}
-                    >
+                    <div className="account-grid account-grid--header mb-1 items-center gap-2 ui-text-xs ui-text-muted">
                       <div />
                       <div>Account Name</div>
                       <div>Managed By</div>
@@ -1271,36 +1145,36 @@ function AppInner() {
                     </div>
                   ) : null}
                   {s.accts.map((a) => (
-                    <div key={a.id} style={{ display: "grid", gap: 8, gridTemplateColumns: "110px 1fr 140px 160px 160px 1fr 110px", alignItems: "center" }}>
-                      <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
+                    <div key={a.id} className="account-grid account-grid--row grid items-center gap-2">
+                      <label className="flex items-center gap-1.5 ui-text-13">
                         <input type="checkbox" checked={a.include} onChange={(e) => setAcct(a.id, { include: e.target.checked })} /> include
                       </label>
-                      <input aria-label="Account Name" value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} style={S.inp} />
+                      <input className="ui-input" aria-label="Account Name" value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} />
                       <Sel v={a.managedBy} set={(v: any) => setAcct(a.id, { managedBy: v })}>
                         <option value="AM">AM</option>
                         <option value="SD">SD</option>
                       </Sel>
                       <USD v={a.projectedRevenue} set={(v) => setAcct(a.id, { projectedRevenue: v })} />
                       <USD v={a.actualRevenue} set={(v) => setAcct(a.id, { actualRevenue: v })} />
-                      <input aria-label="Notes" value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} style={S.inp} />
+                      <input className="ui-input" aria-label="Notes" value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} />
                       <Btn on={() => delAcct(a.id)}>Remove</Btn>
                     </div>
                   ))}
-                  <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", marginTop: 8 }}>
-                    <div style={S.box}>
-                      <div style={{ fontSize: 12, opacity: 0.75 }}>Projected Total</div>
-                      <div style={{ fontSize: 18, fontWeight: 900 }}>{money(recurrent.pTot)}</div>
+                  <div className="mt-2 ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
+                    <div className="ui-box">
+                      <div className="ui-text-xs ui-text-muted">Projected Total</div>
+                      <div className="ui-stat">{money(recurrent.pTot)}</div>
                     </div>
-                    <div style={S.box}>
-                      <div style={{ fontSize: 12, opacity: 0.75 }}>Actual Total</div>
-                      <div style={{ fontSize: 18, fontWeight: 900 }}>{money(recurrent.aTot)}</div>
+                    <div className="ui-box">
+                      <div className="ui-text-xs ui-text-muted">Actual Total</div>
+                      <div className="ui-stat">{money(recurrent.aTot)}</div>
                     </div>
-                    <div style={S.box}>
-                      <div style={{ fontSize: 12, opacity: 0.75 }}>Eligibility</div>
-                      <div style={{ fontSize: 18, fontWeight: 900 }}>{recurrent.kpiOk ? "Eligible" : "Not eligible"}</div>
+                    <div className="ui-box">
+                      <div className="ui-text-xs ui-text-muted">Eligibility</div>
+                      <div className="ui-stat">{recurrent.kpiOk ? "Eligible" : "Not eligible"}</div>
                     </div>
                   </div>
-                  {cfg.rb.length === 0 ? <div style={{ fontSize: 12, opacity: 0.7 }}>Recurrent bonus bands not configured. Add them in Settings JSON (cfg.rb).</div> : null}
+                  {cfg.rb.length === 0 ? <div className="ui-text-xs ui-text-muted">Recurrent bonus bands not configured. Add them in Settings JSON (cfg.rb).</div> : null}
                 </div>
               )
             })}
@@ -1308,11 +1182,11 @@ function AppInner() {
             {Card({
               t: "SPIFFs",
               c: (
-                <div style={{ display: "grid", gap: 12 }}>
-                  <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))" }}>
-                    <div style={S.box}>
-                      <div style={{ fontWeight: 800, marginBottom: 8 }}>SPIFF 1: ABX Account Plans</div>
-                      <div style={{ display: "grid", gap: 10 }}>
+                <div className="ui-grid">
+                  <div className="ui-grid [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">SPIFF 1: ABX Account Plans</div>
+                      <div className="ui-grid-tight">
                         <Field l="A Accounts Total">
                           <Num v={s.sp.aTot} set={(v) => setState({ sp: { ...s.sp, aTot: v } })} />
                         </Field>
@@ -1325,42 +1199,42 @@ function AppInner() {
                         <Field l="B Plans Completed By Dec 31">
                           <Num v={s.sp.bDone} set={(v) => setState({ sp: { ...s.sp, bDone: v } })} />
                         </Field>
-                        <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 10, background: "var(--surface-alt)" }}>
-                          <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 1</div>
-                          <div style={{ fontSize: 18, fontWeight: 900 }}>{money(spiff.s1)}</div>
+                        <div className="ui-surface-alt p-2.5">
+                          <div className="ui-text-xs ui-text-muted">SPIFF 1</div>
+                          <div className="ui-stat">{money(spiff.s1)}</div>
                         </div>
                       </div>
                     </div>
-                    <div style={S.box}>
-                      <div style={{ fontWeight: 800, marginBottom: 8 }}>SPIFF 2: Engagement Strategy</div>
-                      <div style={{ display: "grid", gap: 10 }}>
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">SPIFF 2: Engagement Strategy</div>
+                      <div className="ui-grid-tight">
                         <Field l="Engagement A Accounts Completed By Sep 30">
                           <Num v={s.sp.engDone} set={(v) => setState({ sp: { ...s.sp, engDone: v } })} />
                         </Field>
-                        <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 10, background: "var(--surface-alt)" }}>
-                          <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 2 eligible?</div>
-                          <div style={{ fontSize: 18, fontWeight: 900 }}>{spiff.s2ok ? "Yes" : "No"}</div>
-                          <div style={{ fontSize: 12, opacity: 0.7 }}>Threshold: {spiff.thr}</div>
+                        <div className="ui-surface-alt p-2.5">
+                          <div className="ui-text-xs ui-text-muted">SPIFF 2 eligible?</div>
+                          <div className="ui-stat">{spiff.s2ok ? "Yes" : "No"}</div>
+                          <div className="ui-text-xs ui-text-muted">Threshold: {spiff.thr}</div>
                         </div>
                       </div>
                     </div>
-                    <div style={S.box}>
-                      <div style={{ fontWeight: 800, marginBottom: 8 }}>SPIFF 3: Workshops</div>
-                      <div style={{ display: "grid", gap: 10 }}>
+                    <div className="ui-box">
+                      <div className="mb-2 ui-title">SPIFF 3: Workshops</div>
+                      <div className="ui-grid-tight">
                         <Field l="Workshops A Accounts Completed By Dec 31">
                           <Num v={s.sp.wkDone} set={(v) => setState({ sp: { ...s.sp, wkDone: v } })} />
                         </Field>
-                        <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 10, background: "var(--surface-alt)" }}>
-                          <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF 3 eligible?</div>
-                          <div style={{ fontSize: 18, fontWeight: 900 }}>{spiff.s3ok ? "Yes" : "No"}</div>
+                        <div className="ui-surface-alt p-2.5">
+                          <div className="ui-text-xs ui-text-muted">SPIFF 3 eligible?</div>
+                          <div className="ui-stat">{spiff.s3ok ? "Yes" : "No"}</div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                  <label className="flex items-center gap-2 ui-text-13">
                     <input type="checkbox" checked={s.sp.all3} onChange={(e) => setState({ sp: { ...s.sp, all3: e.target.checked } })} /> All 3 SPIFFs Completed Within 12 Months
                   </label>
-                  <div style={{ ...S.box, display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                  <div className="ui-box flex flex-wrap justify-between gap-2.5">
                     <b>SPIFF total</b>
                     <b>{money(spiff.tot)}</b>
                   </div>
@@ -1371,106 +1245,82 @@ function AppInner() {
         ) : null}
 
         {tab === "RESULTS" ? (
-          <div style={{ display: "grid", gap: 12 }}>
-            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))" }}>
-              <div style={S.box}>
-                <div style={{ fontSize: 12, opacity: 0.75 }}>Sign-On (Before Quota)</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{money(totals.pre)}</div>
+          <div className="ui-grid">
+            <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">Sign-On (Before Quota)</div>
+                <div className="ui-stat">{money(totals.pre)}</div>
               </div>
-              <div style={S.box}>
-                <div style={{ fontSize: 12, opacity: 0.75 }}>Sign-On (After Quota)</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{money(totals.after)}</div>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{quotaVarianceLabel}</div>
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">Sign-On (After Quota)</div>
+                <div className="ui-stat">{money(totals.after)}</div>
+                <div className="ui-text-xs ui-text-muted">{quotaVarianceLabel}</div>
               </div>
-              <div style={S.box}>
-                <div style={{ fontSize: 12, opacity: 0.75 }}>Recurrent (Actual)</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{money(totals.rec)}</div>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{recurrent.kpiOk ? "KPI Eligible" : "Not eligible"}</div>
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">Recurrent (Actual)</div>
+                <div className="ui-stat">{money(totals.rec)}</div>
+                <div className="ui-text-xs ui-text-muted">{recurrent.kpiOk ? "KPI Eligible" : "Not eligible"}</div>
               </div>
-              <div style={S.box}>
-                <div style={{ fontSize: 12, opacity: 0.75 }}>SPIFF</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{money(totals.sp)}</div>
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">SPIFF</div>
+                <div className="ui-stat">{money(totals.sp)}</div>
               </div>
-              <div style={S.box}>
-                <div style={{ fontSize: 12, opacity: 0.75 }}>Total</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{money(totals.all)}</div>
+              <div className="ui-box">
+                <div className="ui-text-xs ui-text-muted">Total</div>
+                <div className="ui-stat">{money(totals.all)}</div>
               </div>
             </div>
             {Card({
               t: "Payout Schedule - subject to annual room quota been met",
-              r: <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{showCsv ? <Btn on={() => setShowCsv(false)}>Hide CSV</Btn> : <Btn on={showCSV} active>Show CSV</Btn>}</div>,
+              r: <div className="ui-row">{showCsv ? <Btn on={() => setShowCsv(false)}>Hide CSV</Btn> : <Btn on={showCSV} active>Show CSV</Btn>}</div>,
               c: (
-                <div style={{ display: "grid", gap: 10 }}>
+                <div className="ui-grid-tight">
                   {showCsv && csvText ? (
-                    <div style={{ ...S.box, background: "var(--surface-alt)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, opacity: 0.8 }}>CSV Output</div>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <div className="ui-box ui-box-alt">
+                      <div className="ui-row-space">
+                        <div className="ui-text-xs ui-text-muted ui-title">CSV Output</div>
+                        <div className="ui-row">
                           <Btn on={selectCSV}>Select CSV</Btn>
                         </div>
                       </div>
-                      <div style={{ marginTop: 8, fontSize: 12, opacity: 0.7 }}>Copy all text and save as a .csv file, then open in Excel.</div>
+                      <div className="mt-2 ui-text-xs ui-text-muted">Copy all text and save as a .csv file, then open in Excel.</div>
                       <textarea
+                        className="mt-2 h-[180px] ui-input font-mono ui-text-xs"
                         ref={csvRef}
                         value={csvText}
                         readOnly
-                        style={{ ...S.inp, height: 180, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 12, borderRadius: 16 }}
                       />
                     </div>
                   ) : null}
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse ui-text-13">
                       <thead>
-                        <tr style={{ opacity: 0.75 }}>
-                          <th style={{ padding: 8, textAlign: "center" }}>Date</th>
-                          <th style={{ padding: 8, textAlign: "center" }}>Category</th>
-                          <th style={{ padding: 8, textAlign: "center" }}>Source</th>
-                          <th style={{ padding: 8, textAlign: "center" }}>Label</th>
-                          <th style={{ padding: 8, textAlign: "center" }}>Amount</th>
-                          <th style={{ padding: 8, textAlign: "center" }}>Status</th>
+                        <tr className="ui-title text-[var(--section-title)]/85">
+                          <th className="p-2 text-center ui-text-13">Date</th>
+                          <th className="p-2 text-center ui-text-13">Category</th>
+                          <th className="p-2 text-center ui-text-13">Source</th>
+                          <th className="p-2 text-center ui-text-13">Label</th>
+                          <th className="p-2 text-center ui-text-13">Amount</th>
+                          <th className="p-2 text-center ui-text-13">Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {eventRows.map((e) => {
                           const status = getStatus(e.key);
                           return (
-                        <tr key={e.key} style={{ borderTop: "1px solid var(--border)", ...rowStyle(status) }}>
-                            <td style={{ padding: 8, fontWeight: 800 }}>{e.date || "(No Date)"}</td>
-                            <td style={{ padding: 8 }}>{e.category}</td>
-                            <td style={{ padding: 8 }}>{e.source}</td>
-                            <td style={{ padding: 8 }}>{e.label}</td>
-                            <td style={{ padding: 8, textAlign: "right", fontWeight: 900 }}>{money(e.amount)}</td>
-                            <td style={{ padding: 8 }}>
+                        <tr key={e.key} className="payout-row border-t border-[var(--border)]" data-status={status}>
+                            <td className="p-2 font-extrabold">{e.date || "(No Date)"}</td>
+                            <td className="p-2">{e.category}</td>
+                            <td className="p-2">{e.source}</td>
+                            <td className="p-2">{e.label}</td>
+                            <td className="p-2 text-right font-black">{money(e.amount)}</td>
+                            <td className="p-2 text-center">
                               <select
+                                className="status-select mx-auto block rounded-full border px-2 py-1 text-xs font-bold"
                                 value={status}
                                 onChange={(ev) => setStatus(e.key, ev.target.value as PayoutStatus)}
                                 aria-label={`Payout status for ${e.source} ${e.label}`}
-                                style={{
-                                  ...S.inp,
-                                  minWidth: 120,
-                                  padding: "4px 8px",
-                                  fontSize: 12,
-                                  fontWeight: 700,
-                                  borderRadius: 999,
-                                  borderColor:
-                                    status === "TO_BE_PAID"
-                                      ? "#22c55e"
-                                      : status === "PAID"
-                                        ? "var(--border)"
-                                        : theme === "dark"
-                                          ? "#64748b"
-                                          : "#94a3b8",
-                                  background:
-                                    status === "TO_BE_PAID"
-                                      ? theme === "dark"
-                                        ? "rgba(34, 197, 94, 0.2)"
-                                        : "rgba(34, 197, 94, 0.14)"
-                                      : status === "PAID"
-                                        ? "var(--surface)"
-                                        : theme === "dark"
-                                          ? "rgba(148, 163, 184, 0.12)"
-                                          : "rgba(148, 163, 184, 0.16)"
-                                }}
+                                data-status={status}
                               >
                                 <option value="TO_BE_PAID">{PAYOUT_STATUS_LABEL.TO_BE_PAID}</option>
                                 <option value="PAID">{PAYOUT_STATUS_LABEL.PAID}</option>
@@ -1482,7 +1332,7 @@ function AppInner() {
                         })}
                         {eventRows.length === 0 ? (
                           <tr>
-                            <td colSpan={6} style={{ padding: 10, opacity: 0.7 }}>
+                            <td colSpan={6} className="p-2.5 ui-text-muted">
                               No Payouts Yet.
                             </td>
                           </tr>
@@ -1497,22 +1347,26 @@ function AppInner() {
         ) : null}
 
         {tab === "SETTINGS" ? (
-          <div style={{ display: "grid", gap: 12 }}>
+          <div className="ui-grid">
             {Card({
               t: "Settings JSON",
               r: (
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <div className="ui-row">
                   <Btn on={() => void doCopy()}>Copy</Btn>
                   <Btn on={apply}>Apply</Btn>
-                  {copyMsg ? <div style={{ ...S.pill, background: "var(--surface)", fontSize: 12, fontWeight: 800 }}>{copyMsg}</div> : null}
+                  {copyMsg ? (
+                    <div role="status" aria-live="polite" className="ui-pill ui-pill-surface ui-text-xs font-extrabold">
+                      {copyMsg}
+                    </div>
+                  ) : null}
                 </div>
               ),
               c: (
                 <textarea
+                  className="h-[520px] ui-input font-mono ui-text-xs"
                   ref={settingsRef}
                   value={j}
                   onChange={(e) => setJ(e.target.value)}
-                  style={{ ...S.inp, height: 520, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 12, borderRadius: 16 }}
                 />
               )
             })}
@@ -1520,17 +1374,17 @@ function AppInner() {
         ) : null}
 
         {tab === "HELP" ? (
-          <div style={{ display: "grid", gap: 12 }}>
+          <div className="ui-grid">
             {Card({
               t: "How This Calculator Works",
               c: (
-                <div style={{ display: "grid", gap: 10, fontSize: 14, lineHeight: 1.5 }}>
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     This tool estimates total BD compensation by combining three payout types: Sign-On, Recurrent, and SPIFFs. The flow is simple:
                     enter inputs, review results, and export the payout schedule if needed.
                   </div>
-                  <div style={{ ...S.box, background: "var(--surface-alt)" }}>
-                    <div style={{ fontWeight: 800, marginBottom: 6 }}>Quick Flow</div>
+                  <div className="ui-box ui-box-alt">
+                    <div className="mb-1.5 ui-title">Quick Flow</div>
                     <div>1) Inputs: enter plan controls, contracts, accounts, and SPIFF progress.</div>
                     <div>2) Results: review totals and payout schedule.</div>
                     <div>3) Settings: adjust bands and rates only if you are a plan admin.</div>
@@ -1542,7 +1396,7 @@ function AppInner() {
             {Card({
               t: "Plan Controls",
               c: (
-                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     <b>Plan Year</b> drives all payout dates (year-end or following year where applicable).
                   </div>
@@ -1559,7 +1413,7 @@ function AppInner() {
             {Card({
               t: "New Contracts (Sign-On)",
               c: (
-                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     Add each new contract and enter the contract type, term, room nights (or annualized revenue for SD), BD share, and relevant dates.
                   </div>
@@ -1583,7 +1437,7 @@ function AppInner() {
             {Card({
               t: "Covered Accounts (Recurrent)",
               c: (
-                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     Add each covered account, set Projected and Actual revenue, and mark whether it should be included.
                   </div>
@@ -1600,7 +1454,7 @@ function AppInner() {
             {Card({
               t: "SPIFFs",
               c: (
-                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     SPIFF 1 is based on completed ABX account plans. SPIFF 2 is based on engagement strategy completion, and SPIFF 3 is based on completed workshops (capped).
                   </div>
@@ -1614,7 +1468,7 @@ function AppInner() {
             {Card({
               t: "Results and CSV Export",
               c: (
-                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     Results show totals for Sign-On, Recurrent, SPIFFs, and the overall total. The Payout Schedule lists all payments by date and category.
                   </div>
@@ -1628,7 +1482,7 @@ function AppInner() {
             {Card({
               t: "Settings JSON (Admin Use)",
               c: (
-                <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
+                <div className="ui-grid-tight text-sm leading-6">
                   <div>
                     Settings contain rate tables and bonus bands. Only plan admins should edit these values.
                   </div>
@@ -1642,9 +1496,9 @@ function AppInner() {
             {Card({
               t: "About",
               c: (
-                <div style={{ fontSize: 14, lineHeight: 1.5 }}>
+                <div className="text-sm leading-6">
                   Developed by Esteban Candamo (2026).
-                  <div style={{ marginTop: 6, fontSize: 13, opacity: 0.8 }}>
+                  <div className="mt-1.5 ui-text-13 ui-text-muted">
                     Restricted to authorized employees of Accommodations Plus International.
                   </div>
                 </div>
@@ -1653,7 +1507,7 @@ function AppInner() {
           </div>
         ) : null}
 
-        <div style={{ marginTop: 6, fontSize: 12, opacity: 0.7, textAlign: "center" }}>
+        <div className="mt-1.5 text-center ui-text-xs ui-text-muted">
           Restricted to authorized employees of Accommodations Plus International. © 2026 Esteban Candamo. All rights reserved.
         </div>
       </div>
