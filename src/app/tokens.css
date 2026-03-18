@@ -1,0 +1,72 @@
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-mono-stack);
+}
+
+:root {
+  color-scheme: light;
+  --font-ui: var(--font-plus-jakarta-sans), system-ui, sans-serif;
+  --font-mono-stack: var(--font-ibm-plex-mono), SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+  --brand-green: #78bc43;
+  --brand-blue: #273b6e;
+  --brand-gray: #7f7f7f;
+  --brand-cloud: #d4d9e1;
+  --page-bg: linear-gradient(145deg, #f4f8ef 0%, #edf2f8 46%, #dfe6f0 100%);
+  --page-grid: rgba(39, 59, 110, 0.08);
+  --panel: rgba(255, 255, 255, 0.76);
+  --panel-strong: rgba(255, 255, 255, 0.9);
+  --panel-soft: rgba(255, 255, 255, 0.62);
+  --panel-border: rgba(39, 59, 110, 0.14);
+  --panel-shadow: 0 24px 60px rgba(39, 59, 110, 0.12);
+  --text-muted: #59657d;
+  --brand-ink: #273b6e;
+  --brand-accent: #78bc43;
+  --brand-accent-soft: rgba(120, 188, 67, 0.18);
+  --brand-highlight: #273b6e;
+  --brand-highlight-soft: rgba(39, 59, 110, 0.14);
+  --button-primary: #273b6e;
+  --button-primary-hover: #1d2d54;
+  --button-primary-text: #ffffff;
+  --button-secondary-bg: rgba(255, 255, 255, 0.74);
+  --button-secondary-hover: rgba(255, 255, 255, 0.92);
+  --button-secondary-text: #273b6e;
+  --badge-bg: rgba(39, 59, 110, 0.08);
+  --badge-text: #273b6e;
+  --status-good-bg: rgba(120, 188, 67, 0.14);
+  --status-good-text: #3c6920;
+  --status-warning-bg: rgba(39, 59, 110, 0.12);
+  --status-warning-text: #273b6e;
+  --status-neutral-bg: rgba(127, 127, 127, 0.12);
+  --status-neutral-text: #5f5f5f;
+}
+
+.dark {
+  color-scheme: dark;
+  --page-bg: linear-gradient(145deg, #0d1730 0%, #17213d 48%, #263559 100%);
+  --page-grid: rgba(212, 217, 225, 0.08);
+  --panel: rgba(18, 29, 57, 0.76);
+  --panel-strong: rgba(18, 29, 57, 0.88);
+  --panel-soft: rgba(212, 217, 225, 0.07);
+  --panel-border: rgba(212, 217, 225, 0.12);
+  --panel-shadow: none;
+  --text-muted: #b8c1d1;
+  --brand-ink: #f3f7fb;
+  --brand-accent: #8ecf5f;
+  --brand-accent-soft: rgba(120, 188, 67, 0.2);
+  --brand-highlight: #d4d9e1;
+  --brand-highlight-soft: rgba(212, 217, 225, 0.16);
+  --button-primary: #78bc43;
+  --button-primary-hover: #8ecf5f;
+  --button-primary-text: #12203d;
+  --button-secondary-bg: rgba(212, 217, 225, 0.08);
+  --button-secondary-hover: rgba(212, 217, 225, 0.14);
+  --button-secondary-text: #f3f7fb;
+  --badge-bg: rgba(212, 217, 225, 0.12);
+  --badge-text: #f3f7fb;
+  --status-good-bg: rgba(120, 188, 67, 0.2);
+  --status-good-text: #d7efc4;
+  --status-warning-bg: rgba(212, 217, 225, 0.14);
+  --status-warning-text: #f3f7fb;
+  --status-neutral-bg: rgba(127, 127, 127, 0.16);
+  --status-neutral-text: #d4d9e1;
+}

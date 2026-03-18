@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Btn, Card, Field, InfoTip, Num, Sel, UI } from "./components/ui";
+import { Button } from "./components/ui/button";
+import { CollapsiblePanel } from "./components/ui/collapsible-panel";
+import { FieldGroup, InputField, NumberField, SelectField, TextAreaField } from "./components/ui/field";
+import { InfoCard } from "./components/ui/info-card";
+import { StatCard } from "./components/ui/stat-card";
+import { Surface } from "./components/ui/surface";
+import { ThemeToggle } from "./components/ui/theme-toggle";
+import { ToggleIconButton } from "./components/ui/toggle-icon-button";
+import { applyTheme, getPreferredTheme, type AppTheme } from "./lib/theme";
 
 const uid = () => Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
 const n = (v: any) => {
@@ -506,8 +514,8 @@ const RN = ({ v, set }: { v: number; set: (x: number) => void }) => {
     if (!f) setT(String(v ?? 0));
   }, [v, f]);
   return (
-    <input
-      className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]"
+    <InputField
+      className="control-input"
       type="text"
       inputMode="numeric"
       value={f ? t : fmtI(v)}
@@ -531,8 +539,8 @@ const RNBlank = ({ v, set }: { v: number | ""; set: (x: number | "") => void }) 
     if (!f) setT(v === "" ? "" : String(v));
   }, [v, f]);
   return (
-    <input
-      className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]"
+    <InputField
+      className="control-input"
       type="text"
       inputMode="numeric"
       value={f ? t : v === "" ? "" : fmtI(v)}
@@ -557,8 +565,8 @@ const USD = ({ v, set }: { v: number; set: (x: number) => void }) => {
     if (!f) setT(String(v ?? 0));
   }, [v, f]);
   return (
-    <input
-      className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]"
+    <InputField
+      className="control-input"
       type="text"
       inputMode="decimal"
       value={f ? t : fmt$(v)}
@@ -578,8 +586,8 @@ const USD = ({ v, set }: { v: number; set: (x: number) => void }) => {
 const PctIn = ({ v, set }: { v: number; set: (x: number) => void }) => {
   const val = cl(n(v) * 100, 0, 100);
   return (
-    <input
-      className="control-input w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)]"
+    <InputField
+      className="control-input"
       type="number"
       value={Number.isFinite(val) ? val : 0}
       min={0}
@@ -593,8 +601,52 @@ const PctIn = ({ v, set }: { v: number; set: (x: number) => void }) => {
   );
 };
 
+const Card = ({
+  t,
+  r,
+  c,
+  collapsed = false,
+  onToggle
+}: {
+  t: React.ReactNode;
+  r?: React.ReactNode;
+  c: React.ReactNode;
+  collapsed?: boolean;
+  onToggle?: () => void;
+}) => (
+  <CollapsiblePanel title={t} actions={r} collapsed={collapsed} onToggle={onToggle}>
+    {c}
+  </CollapsiblePanel>
+);
+
+const Field = ({ l, children }: { l: string; children: React.ReactNode }) => <FieldGroup label={l}>{children}</FieldGroup>;
+
+const Sel = ({ v, set, children }: { v: any; set: (x: any) => void; children: React.ReactNode }) => (
+  <SelectField value={v} onChange={(e) => set(e.target.value)}>
+    {children}
+  </SelectField>
+);
+
+const Num = ({ v, set, step = 1, min, disabled = false }: { v: any; set: (x: number) => void; step?: number; min?: number; disabled?: boolean }) => (
+  <InputField
+    type="number"
+    value={Number.isFinite(v) ? v : 0}
+    step={step}
+    min={min}
+    disabled={disabled}
+    onChange={(e) => set(Number(e.target.value))}
+  />
+);
+
 function AppInner() {
   const [tab, setTab] = useState<"INPUTS" | "RESULTS" | "SETTINGS" | "HELP">("INPUTS");
+  const [inputSections, setInputSections] = useState({
+    controls: true,
+    contracts: true,
+    accounts: false,
+    spiffs: false
+  });
+  const [contractSections, setContractSections] = useState<Record<string, boolean>>({});
   const [cfg, setCfg] = useState<Config>(() => dclone(CFG0));
   const [s, setS] = useState<State>(() => dclone(S0));
   const quota = useMemo(() => computeQuotaFactor(s.booked, s.quota), [s.booked, s.quota]);
@@ -606,7 +658,7 @@ function AppInner() {
     const val = `${capped > 0 ? "+" : ""}${pct(capped)}`;
     if (Math.abs(capped) < 1e-9) return `Quota Variance: ${val} (On target)`;
     if (capped > 0) return raw > 0.05 ? `Quota Variance: ${val} (Overachievement cap applied)` : `Quota Variance: ${val} (Overachievement)`;
-    return raw < -0.3 ? `Quota Variance: ${val} (Shortfall cap applied)` : `Quota Variance: ${val} (Shortfall)`;
+    return raw < -0.3 ? `Quota Variance: ${val}\n(Shortfall cap applied)` : `Quota Variance: ${val} (Shortfall)`;
   }, [quota.achievement, s.quota]);
 
   const cRank = useMemo(() => {
@@ -703,6 +755,9 @@ function AppInner() {
   }, [signOn.pre, signOn.after, recurrent.aTot, recurrent.kpiOk, spiff.tot]);
 
   const setState = (p: Partial<State>) => setS((s0) => ({ ...s0, ...p }));
+  const toggleInputSection = (key: keyof typeof inputSections) => setInputSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  const isContractSectionOpen = (id: string) => contractSections[id] ?? true;
+  const toggleContractSection = (id: string) => setContractSections((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
   const setContract = (id: string, p: Partial<Contract>) => setS((s0) => ({ ...s0, contracts: s0.contracts.map((c) => (c.id === id ? { ...c, ...p } : c)) }));
   const delContract = (id: string) => setS((s0) => ({ ...s0, contracts: s0.contracts.filter((c) => c.id !== id) }));
   const addContract = () =>
@@ -744,21 +799,14 @@ function AppInner() {
   const [showCsv, setShowCsv] = useState(false);
   const csvRef = useRef<HTMLTextAreaElement | null>(null);
   const settingsRef = useRef<HTMLTextAreaElement | null>(null);
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    try {
-      const saved = localStorage.getItem("theme");
-      if (saved === "light" || saved === "dark") return saved;
-    } catch {}
-    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  const [theme, setTheme] = useState<AppTheme>(() => {
+    if (typeof document !== "undefined") {
+      return document.documentElement.classList.contains("dark") ? "dark" : "light";
     }
-    return "light";
+    return getPreferredTheme();
   });
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    try {
-      localStorage.setItem("theme", theme);
-    } catch {}
+    applyTheme(theme);
   }, [theme]);
   useEffect(() => {
     setS((prevState) => {
@@ -776,7 +824,7 @@ function AppInner() {
       return prevState;
     });
   }, [eventRows]);
-  const headerLogoSrc = theme === "dark" ? "/brand/API-white.svg" : "/brand/API-green-white.svg";
+  const headerLogoSrc = theme === "dark" ? "/brand/API-green-white.svg" : "/brand/API-green.svg";
 
   const getStatus = (key: string): PayoutStatus => (s.payoutStatuses?.[key] as PayoutStatus | undefined) ?? "TO_BE_PAID";
   const setStatus = (key: string, status: PayoutStatus) =>
@@ -834,6 +882,13 @@ function AppInner() {
       setTimeout(() => setCopyMsg(""), 2000);
     }
   };
+  const summaryCards = [
+    { title: "Sign-On (Before Quota)", value: money(totals.pre) },
+    { title: "Sign-On (After Quota)", value: money(totals.after), detail: quotaVarianceLabel, preserveBreaks: true },
+    { title: "Recurrent (Actual)", value: money(totals.rec), detail: recurrent.kpiOk ? "KPI Eligible" : "Not eligible" },
+    { title: "SPIFF", value: money(totals.sp) },
+    { title: "Total", value: money(totals.all) }
+  ];
 
   return (
     <div className="app-shell min-h-screen ui-wrap">
@@ -844,52 +899,26 @@ function AppInner() {
               <div className="brand-logo-wrap">
                 <img className="brand-logo" src={headerLogoSrc} alt="Accommodations Plus International logo" />
               </div>
-              <div>
-                <div className="brand-subtitle">API GLOBAL SOLUTIONS</div>
-                <div className="app-title text-[22px] font-black">BD Comp Plan Calculator</div>
+              <div className="brand-copy">
+                <h1 className="app-title text-4xl leading-[0.96] font-semibold md:text-6xl xl:text-[4.35rem]">BD Comp Plan Calculator</h1>
+                <p className="ui-text-muted max-w-[44rem] text-base md:text-lg">
+                  Calculate sign-on, recurrent, and SPIFF compensation in a single planning workspace without changing plan logic.
+                </p>
+                <div className="app-actions menu-panel ui-row">
+                  <Button onClick={() => setTab("INPUTS")} variant={tab === "INPUTS" ? "primary" : "secondary"} size="sm">Inputs</Button>
+                  <Button onClick={() => setTab("RESULTS")} variant={tab === "RESULTS" ? "primary" : "secondary"} size="sm">Results</Button>
+                  <Button onClick={() => setTab("SETTINGS")} variant={tab === "SETTINGS" ? "primary" : "secondary"} size="sm">Settings</Button>
+                  <Button onClick={() => setTab("HELP")} variant={tab === "HELP" ? "primary" : "secondary"} size="sm">Help</Button>
+                  <Button onClick={() => void doCopy()} variant="secondary" size="sm">Copy JSON</Button>
+                  {copyMsg ? (
+                    <div role="status" aria-live="polite" className="ui-pill ui-pill-surface text-xs font-extrabold">
+                      {copyMsg}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
-            <div className="header-tagline">
-              Providing the best and most efficient layover experience for your crew and passengers.
-            </div>
-            <button
-              className="icon-button header-theme-toggle"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-              aria-pressed={theme === "dark"}
-              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            >
-              {theme === "dark" ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.8" />
-                  <path d="M12 2.5v2.3M12 19.2v2.3M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M2.5 12h2.3M19.2 12h2.3M4.8 19.2l1.6-1.6M17.6 6.4l1.6-1.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M20.3 14.5A8.7 8.7 0 1 1 9.5 3.7a7.2 7.2 0 1 0 10.8 10.8Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </button>
-          </div>
-          <div className="app-actions menu-panel ui-row">
-            <Btn on={() => setTab("INPUTS")} active={tab === "INPUTS"}>
-              Inputs
-            </Btn>
-            <Btn on={() => setTab("RESULTS")} active={tab === "RESULTS"}>
-              Results
-            </Btn>
-            <Btn on={() => setTab("SETTINGS")} active={tab === "SETTINGS"}>
-              Settings
-            </Btn>
-            <Btn on={() => setTab("HELP")} active={tab === "HELP"}>
-              Help
-            </Btn>
-            <Btn on={() => void doCopy()}>Copy JSON</Btn>
-            {copyMsg ? (
-              <div role="status" aria-live="polite" className="ui-pill ui-pill-surface text-xs font-extrabold">
-                {copyMsg}
-              </div>
-            ) : null}
+            <ThemeToggle className="header-theme-toggle" theme={theme} onToggle={() => setTheme(theme === "dark" ? "light" : "dark")} />
           </div>
         </div>
 
@@ -897,6 +926,8 @@ function AppInner() {
           <div className="ui-grid">
             {Card({
               t: "Comp Plan Controls",
+              collapsed: !inputSections.controls,
+              onToggle: () => toggleInputSection("controls"),
               c: (
                 <div className="ui-grid">
                   <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
@@ -939,10 +970,10 @@ function AppInner() {
                     <div className="ui-box">
                       <div className="mb-2 ui-title">KPI Gate</div>
                       <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
-                        <Field l="KPI: New Annualized Room Nights">
+                        <Field l="KPI: New Annual Room Nights">
                           <RN v={s.kpiRN} set={(v) => setState({ kpiRN: v })} />
                         </Field>
-                        <Field l="KPI: New Annualized Revenue">
+                        <Field l="KPI: New Annual Revenue">
                           <USD v={s.kpiRev} set={(v) => setState({ kpiRev: v })} />
                         </Field>
                       </div>
@@ -963,9 +994,13 @@ function AppInner() {
 
             {Card({
               t: "New Contracts (Sign-On)",
-              r: <Btn on={addContract}>Add Contract</Btn>,
-              c: (
+              collapsed: !inputSections.contracts,
+              onToggle: () => toggleInputSection("contracts"),
+                  c: (
                 <div className="ui-grid">
+                  <div className="ui-row">
+                    <Button onClick={addContract} variant="secondary" size="sm">Add Contract</Button>
+                  </div>
                   {cRank.map((c: any) => {
                     const isSD = c.type === "SD_ACCOUNT";
                     const minT = c.type === "NETWORK_GTA" ? 2 : 1;
@@ -974,151 +1009,173 @@ function AppInner() {
                     const pre = r.total,
                       after = pre * quota.factor;
                     const timing = computeContractTiming(cfg, c, c.rank ?? null, pre);
+                    const isOpen = isContractSectionOpen(c.id);
                     return (
                       <div key={c.id} className="ui-box">
                         <div className="ui-row-space">
-                          <input className="ui-input flex-1 font-extrabold min-w-[260px]" value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} />
+                          <div className="ui-row flex-1 min-w-[260px]">
+                            <button
+                              type="button"
+                              onClick={() => toggleContractSection(c.id)}
+                              aria-expanded={isOpen}
+                              aria-label={`${isOpen ? "Collapse" : "Expand"} ${c.name || "contract"}`}
+                              className="brand-btn-secondary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
+                            >
+                              <svg
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                aria-hidden="true"
+                                className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                              >
+                                <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                            <InputField className="flex-1 min-w-[220px] font-extrabold" value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} />
+                          </div>
                           <div className="ui-row">
-                            <Btn on={() => delContract(c.id)}>Remove</Btn>
+                            <Button onClick={() => delContract(c.id)} variant="secondary" size="sm">Remove</Button>
                           </div>
                         </div>
                         {r.warnings?.length ? <div className="mt-2 ui-text-xs ui-text-muted">{r.warnings.join(" · ")}</div> : null}
-
-                        <div className="mt-2.5 ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
-                          <Field l="Contract Type">
-                            <Sel
-                              v={c.type}
-                              set={(v: CT) => {
-                                const p: any = { type: v };
-                                if (v === "SD_ACCOUNT") {
-                                  p.payoutModel = "SD_QUARTERLY";
-                                  p.payoutScenario = "STANDARD";
-                                } else if (c.payoutModel === "SD_QUARTERLY") {
-                                  p.payoutModel = "AIRLINE_70_30";
-                                }
-                                setContract(c.id, p);
-                              }}
-                            >
-                              <option value="NETWORK_GTA">Network GTA</option>
-                              <option value="SOURCING_ONLY">Sourcing-Only Network</option>
-                              <option value="SD_ACCOUNT">SD Account</option>
-                            </Sel>
-                          </Field>
-                          {!isSD ? (
-                            <Field l="Business Line">
-                              <Sel v={c.line} set={(v: LT) => setContract(c.id, { line: v })}>
-                                <option value="AIRLINE_CREW">Crew</option>
-                                <option value="DPAX">DPAX</option>
-                              </Sel>
-                            </Field>
-                          ) : (
-                            <div />
-                          )}
-                          <Field l="Term Years">
-                            <div className="ui-stack">
-                              <Num v={c.termYears} set={(v) => setContract(c.id, { termYears: v })} min={1} disabled={termLockedByScenario} />
-                              {termLockedByScenario ? (
-                                <div className="ui-text-xs ui-text-muted">Disabled for non-standard scenarios because payout uses scenario-defined years.</div>
-                              ) : null}
-                            </div>
-                          </Field>
-                          {!isSD ? (
-                            <>
-                              <Field l="Projected Room Nights">
-                                <RN v={c.projectedRoomNights} set={(v) => setContract(c.id, { projectedRoomNights: v })} />
-                              </Field>
-                              <Field l="Actual Room Nights">
-                                <RNBlank v={c.actualRoomNights} set={(v) => setContract(c.id, { actualRoomNights: v })} />
-                              </Field>
-                              <div />
-                            </>
-                          ) : (
-                            <>
-                              <Field l="Annualized Revenue">
-                                <USD v={c.annualizedRevenue} set={(v) => setContract(c.id, { annualizedRevenue: v })} />
-                              </Field>
-                              <div />
-                              <div />
-                            </>
-                          )}
-                          <Field l="BD Share (%)">
-                            <PctIn v={c.bdShare} set={(v) => setContract(c.id, { bdShare: v })} />
-                          </Field>
-                          <Field l="Contract Execution Date">
-                            <input className="ui-input" type="date" value={c.startDate} onChange={(e) => setContract(c.id, { startDate: e.target.value })} />
-                          </Field>
-                          <Field l="Close Date">
-                            <input className="ui-input" type="date" value={c.closeDate} onChange={(e) => setContract(c.id, { closeDate: e.target.value })} />
-                          </Field>
-                          {!isSD ? (
-                            <Field l="Payout Model">
-                              <Sel v={c.payoutModel} set={(v: PM) => setContract(c.id, { payoutModel: v })}>
-                                <option value="AIRLINE_70_30">Crew (70/30)</option>
-                                <option value="DPAX_50_50">DPAX (50/50)</option>
-                              </Sel>
-                            </Field>
-                          ) : (
-                            <div />
-                          )}
-                          {!isSD ? (
-                            <div className="col-[1/-1]">
-                              <Field l="Payout Scenario">
-                                <div className="max-w-[640px]">
-                                  <Sel
-                                    v={c.payoutScenario}
-                                    set={(v: PS) =>
-                                      setContract(c.id, {
-                                        payoutScenario: v,
-                                        ...(v !== "STANDARD" ? { termYears: 5 } : {})
-                                      })
+                        <div className={`grid overflow-hidden transition-[grid-template-rows,opacity,margin] duration-300 ease-out ${isOpen ? "mt-2.5 grid-rows-[1fr] opacity-100" : "mt-0 grid-rows-[0fr] opacity-0"}`}>
+                          <div className="min-h-0 overflow-hidden">
+                            <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+                              <Field l="Contract Type">
+                                <Sel
+                                  v={c.type}
+                                  set={(v: CT) => {
+                                    const p: any = { type: v };
+                                    if (v === "SD_ACCOUNT") {
+                                      p.payoutModel = "SD_QUARTERLY";
+                                      p.payoutScenario = "STANDARD";
+                                    } else if (c.payoutModel === "SD_QUARTERLY") {
+                                      p.payoutModel = "AIRLINE_70_30";
                                     }
-                                  >
-                                    <option value="STANDARD">{PAYOUT_SCENARIO_OPTION_TEXT.STANDARD}</option>
-                                    <option value="SCENARIO_1">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_1}</option>
-                                    <option value="SCENARIO_2">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_2}</option>
-                                    <option value="SCENARIO_3">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_3}</option>
-                                    <option value="SCENARIO_4">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_4}</option>
+                                    setContract(c.id, p);
+                                  }}
+                                >
+                                  <option value="NETWORK_GTA">Network GTA</option>
+                                  <option value="SOURCING_ONLY">Sourcing-Only Network</option>
+                                  <option value="SD_ACCOUNT">SD Account</option>
+                                </Sel>
+                              </Field>
+                              {!isSD ? (
+                                <Field l="Business Line">
+                                  <Sel v={c.line} set={(v: LT) => setContract(c.id, { line: v })}>
+                                    <option value="AIRLINE_CREW">Crew</option>
+                                    <option value="DPAX">DPAX</option>
                                   </Sel>
+                                </Field>
+                              ) : (
+                                <div />
+                              )}
+                              <Field l="Term Years">
+                                <div className="ui-stack">
+                                  <Num v={c.termYears} set={(v) => setContract(c.id, { termYears: v })} min={1} disabled={termLockedByScenario} />
+                                  {termLockedByScenario ? (
+                                    <div className="ui-text-xs ui-text-muted">Disabled for non-standard scenarios because payout uses scenario-defined years.</div>
+                                  ) : null}
                                 </div>
                               </Field>
+                              {!isSD ? (
+                                <>
+                                  <Field l="Projected Room Nights">
+                                    <RN v={c.projectedRoomNights} set={(v) => setContract(c.id, { projectedRoomNights: v })} />
+                                  </Field>
+                                  <Field l="Actual Room Nights">
+                                    <RNBlank v={c.actualRoomNights} set={(v) => setContract(c.id, { actualRoomNights: v })} />
+                                  </Field>
+                                  <div />
+                                </>
+                              ) : (
+                                <>
+                                  <Field l="Annualized Revenue">
+                                    <USD v={c.annualizedRevenue} set={(v) => setContract(c.id, { annualizedRevenue: v })} />
+                                  </Field>
+                                  <div />
+                                  <div />
+                                </>
+                              )}
+                              <Field l="BD Share (%)">
+                                <PctIn v={c.bdShare} set={(v) => setContract(c.id, { bdShare: v })} />
+                              </Field>
+                              <Field l="Contract Sign Date">
+                                <InputField type="date" value={c.startDate} onChange={(e) => setContract(c.id, { startDate: e.target.value })} />
+                              </Field>
+                              <Field l="Close Date">
+                                <InputField type="date" value={c.closeDate} onChange={(e) => setContract(c.id, { closeDate: e.target.value })} />
+                              </Field>
+                              {!isSD ? (
+                                <Field l="Payout Model">
+                                  <Sel v={c.payoutModel} set={(v: PM) => setContract(c.id, { payoutModel: v })}>
+                                    <option value="AIRLINE_70_30">Crew (70/30)</option>
+                                    <option value="DPAX_50_50">DPAX (50/50)</option>
+                                  </Sel>
+                                </Field>
+                              ) : (
+                                <div />
+                              )}
+                              {!isSD ? (
+                                <div className="col-[1/-1]">
+                                  <Field l="Payout Scenario">
+                                    <div className="max-w-[640px]">
+                                      <Sel
+                                        v={c.payoutScenario}
+                                        set={(v: PS) =>
+                                          setContract(c.id, {
+                                            payoutScenario: v,
+                                            ...(v !== "STANDARD" ? { termYears: 5 } : {})
+                                          })
+                                        }
+                                      >
+                                        <option value="STANDARD">{PAYOUT_SCENARIO_OPTION_TEXT.STANDARD}</option>
+                                        <option value="SCENARIO_1">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_1}</option>
+                                        <option value="SCENARIO_2">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_2}</option>
+                                        <option value="SCENARIO_3">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_3}</option>
+                                        <option value="SCENARIO_4">{PAYOUT_SCENARIO_OPTION_TEXT.SCENARIO_4}</option>
+                                      </Sel>
+                                    </div>
+                                  </Field>
+                                </div>
+                              ) : (
+                                <div />
+                              )}
+                              {!isSD && c.payoutScenario === "SCENARIO_3" ? (
+                                <Field l="T4C After Year">
+                                  <Sel v={String(c.t4cAfterYear ?? minT)} set={(v: any) => setContract(c.id, { t4cAfterYear: Number(v) })}>
+                                    <option value="1" disabled={minT > 1}>
+                                      T4C After Year 1
+                                    </option>
+                                    <option value="2" disabled={minT > 2}>
+                                      T4C after year 2
+                                    </option>
+                                    <option value="3">T4C after year 3</option>
+                                    <option value="4">T4C after year 4</option>
+                                  </Sel>
+                                </Field>
+                              ) : (
+                                <div />
+                              )}
                             </div>
-                          ) : (
-                            <div />
-                          )}
-                          {!isSD && c.payoutScenario === "SCENARIO_3" ? (
-                            <Field l="T4C After Year">
-                              <Sel v={String(c.t4cAfterYear ?? minT)} set={(v: any) => setContract(c.id, { t4cAfterYear: Number(v) })}>
-                                <option value="1" disabled={minT > 1}>
-                                  T4C After Year 1
-                                </option>
-                                <option value="2" disabled={minT > 2}>
-                                  T4C after year 2
-                                </option>
-                                <option value="3">T4C after year 3</option>
-                                <option value="4">T4C after year 4</option>
-                              </Sel>
-                            </Field>
-                          ) : (
-                            <div />
-                          )}
-                        </div>
 
-                        <div className="ui-box ui-box-alt mt-2.5">
-                          <div className="ui-text-xs ui-text-muted ui-title">Timing Preview</div>
-                          <div className="mt-2 ui-stack [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
-                            {timing.map((t: any, i: number) => (
-                              <div
-                                key={i}
-                                className="ui-row-space ui-surface px-2.5 py-2 ui-text-13"
-                              >
-                                <div className="min-w-0 flex-1">
-                                  <b>{t.date || "(No Date)"}</b> <span className="ui-text-muted">{t.label}</span>
-                                </div>
-                                <div>
-                                  <b>{money(t.amount)}</b>
-                                </div>
+                            <div className="ui-box ui-box-alt mt-2.5">
+                              <div className="ui-text-xs ui-text-muted ui-title">Timing Preview</div>
+                              <div className="mt-2 ui-stack [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+                                {timing.map((t: any, i: number) => (
+                                  <div
+                                    key={i}
+                                    className="ui-row-space ui-surface px-2.5 py-2 ui-text-13"
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <b>{t.date || "(No Date)"}</b> <span className="ui-text-muted">{t.label}</span>
+                                    </div>
+                                    <div>
+                                      <b>{money(t.amount)}</b>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1130,9 +1187,13 @@ function AppInner() {
 
             {Card({
               t: "Covered Accounts (Recurrent)",
-              r: <Btn on={addAcct}>Add Account</Btn>,
+              collapsed: !inputSections.accounts,
+              onToggle: () => toggleInputSection("accounts"),
               c: (
                 <div className="ui-grid-tight">
+                  <div className="ui-row">
+                    <Button onClick={addAcct} variant="secondary" size="sm">Add Account</Button>
+                  </div>
                   {s.accts.length ? (
                     <div className="account-grid account-grid--header mb-1 items-center gap-2 ui-text-xs ui-text-muted">
                       <div />
@@ -1149,15 +1210,15 @@ function AppInner() {
                       <label className="flex items-center gap-1.5 ui-text-13">
                         <input type="checkbox" checked={a.include} onChange={(e) => setAcct(a.id, { include: e.target.checked })} /> include
                       </label>
-                      <input className="ui-input" aria-label="Account Name" value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} />
+                      <InputField aria-label="Account Name" value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} />
                       <Sel v={a.managedBy} set={(v: any) => setAcct(a.id, { managedBy: v })}>
                         <option value="AM">AM</option>
                         <option value="SD">SD</option>
                       </Sel>
                       <USD v={a.projectedRevenue} set={(v) => setAcct(a.id, { projectedRevenue: v })} />
                       <USD v={a.actualRevenue} set={(v) => setAcct(a.id, { actualRevenue: v })} />
-                      <input className="ui-input" aria-label="Notes" value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} />
-                      <Btn on={() => delAcct(a.id)}>Remove</Btn>
+                      <InputField aria-label="Notes" value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} />
+                      <Button onClick={() => delAcct(a.id)} variant="secondary" size="sm">Remove</Button>
                     </div>
                   ))}
                   <div className="mt-2 ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
@@ -1181,6 +1242,8 @@ function AppInner() {
 
             {Card({
               t: "SPIFFs",
+              collapsed: !inputSections.spiffs,
+              onToggle: () => toggleInputSection("spiffs"),
               c: (
                 <div className="ui-grid">
                   <div className="ui-grid [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
@@ -1247,32 +1310,16 @@ function AppInner() {
         {tab === "RESULTS" ? (
           <div className="ui-grid">
             <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
-              <div className="ui-box">
-                <div className="ui-text-xs ui-text-muted">Sign-On (Before Quota)</div>
-                <div className="ui-stat">{money(totals.pre)}</div>
-              </div>
-              <div className="ui-box">
-                <div className="ui-text-xs ui-text-muted">Sign-On (After Quota)</div>
-                <div className="ui-stat">{money(totals.after)}</div>
-                <div className="ui-text-xs ui-text-muted">{quotaVarianceLabel}</div>
-              </div>
-              <div className="ui-box">
-                <div className="ui-text-xs ui-text-muted">Recurrent (Actual)</div>
-                <div className="ui-stat">{money(totals.rec)}</div>
-                <div className="ui-text-xs ui-text-muted">{recurrent.kpiOk ? "KPI Eligible" : "Not eligible"}</div>
-              </div>
-              <div className="ui-box">
-                <div className="ui-text-xs ui-text-muted">SPIFF</div>
-                <div className="ui-stat">{money(totals.sp)}</div>
-              </div>
-              <div className="ui-box">
-                <div className="ui-text-xs ui-text-muted">Total</div>
-                <div className="ui-stat">{money(totals.all)}</div>
-              </div>
+              {summaryCards.map((card) => (
+                <InfoCard key={String(card.title)} title={card.title} className="rounded-[1.6rem] px-4 py-4">
+                  <div className="ui-stat">{card.value}</div>
+                  {card.detail ? <div className={`ui-text-xs ui-text-muted mt-2 ${card.preserveBreaks ? "whitespace-pre-line" : ""}`}>{card.detail}</div> : null}
+                </InfoCard>
+              ))}
             </div>
             {Card({
               t: "Payout Schedule - subject to annual room quota been met",
-              r: <div className="ui-row">{showCsv ? <Btn on={() => setShowCsv(false)}>Hide CSV</Btn> : <Btn on={showCSV} active>Show CSV</Btn>}</div>,
+              r: <div className="ui-row">{showCsv ? <Button onClick={() => setShowCsv(false)} variant="secondary" size="sm">Hide CSV</Button> : <Button onClick={showCSV} variant="primary" size="sm">Show CSV</Button>}</div>,
               c: (
                 <div className="ui-grid-tight">
                   {showCsv && csvText ? (
@@ -1280,7 +1327,7 @@ function AppInner() {
                       <div className="ui-row-space">
                         <div className="ui-text-xs ui-text-muted ui-title">CSV Output</div>
                         <div className="ui-row">
-                          <Btn on={selectCSV}>Select CSV</Btn>
+                          <Button onClick={selectCSV} variant="secondary" size="sm">Select CSV</Button>
                         </div>
                       </div>
                       <div className="mt-2 ui-text-xs ui-text-muted">Copy all text and save as a .csv file, then open in Excel.</div>
@@ -1295,7 +1342,7 @@ function AppInner() {
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse ui-text-13">
                       <thead>
-                        <tr className="ui-title text-[var(--section-title)]/85">
+                        <tr className="ui-title text-[var(--brand-ink)]/85">
                           <th className="p-2 text-center ui-text-13">Date</th>
                           <th className="p-2 text-center ui-text-13">Category</th>
                           <th className="p-2 text-center ui-text-13">Source</th>
@@ -1308,7 +1355,7 @@ function AppInner() {
                         {eventRows.map((e) => {
                           const status = getStatus(e.key);
                           return (
-                        <tr key={e.key} className="payout-row border-t border-[var(--border)]" data-status={status}>
+                        <tr key={e.key} className="payout-row border-t border-[var(--panel-border)]" data-status={status}>
                             <td className="p-2 font-extrabold">{e.date || "(No Date)"}</td>
                             <td className="p-2">{e.category}</td>
                             <td className="p-2">{e.source}</td>
@@ -1352,8 +1399,8 @@ function AppInner() {
               t: "Settings JSON",
               r: (
                 <div className="ui-row">
-                  <Btn on={() => void doCopy()}>Copy</Btn>
-                  <Btn on={apply}>Apply</Btn>
+                  <Button onClick={() => void doCopy()} variant="secondary" size="sm">Copy</Button>
+                  <Button onClick={apply} variant="secondary" size="sm">Apply</Button>
                   {copyMsg ? (
                     <div role="status" aria-live="polite" className="ui-pill ui-pill-surface ui-text-xs font-extrabold">
                       {copyMsg}
@@ -1362,8 +1409,8 @@ function AppInner() {
                 </div>
               ),
               c: (
-                <textarea
-                  className="h-[520px] ui-input font-mono ui-text-xs"
+                <TextAreaField
+                  className="h-[520px] font-mono ui-text-xs"
                   ref={settingsRef}
                   value={j}
                   onChange={(e) => setJ(e.target.value)}

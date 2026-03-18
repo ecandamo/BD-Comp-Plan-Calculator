@@ -1,0 +1,154 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  background:
+    linear-gradient(to right, transparent 0, transparent calc(100% - 1px), var(--page-grid) calc(100% - 1px)),
+    linear-gradient(to bottom, transparent 0, transparent calc(100% - 1px), var(--page-grid) calc(100% - 1px)),
+    var(--page-bg);
+  background-size:
+    100px 100px,
+    100px 100px,
+    cover;
+  color: var(--brand-ink);
+}
+
+button,
+input,
+select,
+table,
+textarea {
+  font-family: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--brand-accent-soft);
+}
+
+@layer components {
+  .app-shell {
+    position: relative;
+  }
+
+  .app-shell::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at top left, var(--brand-accent-soft), transparent 26%),
+      radial-gradient(circle at right 18% top 18%, var(--brand-highlight-soft), transparent 24%);
+    opacity: 0.65;
+  }
+
+  .panel {
+    border: 1px solid var(--panel-border);
+    background: var(--panel);
+    box-shadow: var(--panel-shadow);
+    backdrop-filter: blur(14px);
+  }
+
+  .panel-wash {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel-wash::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at top right, color-mix(in srgb, var(--brand-accent-soft) 90%, transparent), transparent 24%),
+      radial-gradient(circle at bottom left, color-mix(in srgb, var(--brand-highlight-soft) 90%, transparent), transparent 28%);
+    opacity: 0.55;
+  }
+
+  .field-shell {
+    border: 1px solid var(--panel-border);
+    background: rgba(255, 255, 255, 0.72);
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  }
+
+  .dark .field-shell {
+    background: rgba(2, 6, 23, 0.7);
+  }
+
+  .field-shell:focus-visible,
+  .field-shell:focus-within {
+    outline: none;
+    border-color: color-mix(in srgb, var(--brand-accent) 36%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  }
+
+  .brand-btn-primary {
+    border: 1px solid color-mix(in srgb, var(--button-primary) 86%, black 8%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--button-primary) 94%, white 6%), var(--button-primary));
+    color: var(--button-primary-text);
+    box-shadow: 0 16px 30px color-mix(in srgb, var(--button-primary) 22%, transparent);
+    transition:
+      transform 180ms ease,
+      background-color 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .brand-btn-primary:hover {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--button-primary-hover) 92%, white 8%), var(--button-primary-hover));
+    box-shadow: 0 20px 34px color-mix(in srgb, var(--button-primary) 26%, transparent);
+  }
+
+  .brand-btn-primary:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--brand-accent) 20%, transparent),
+      0 20px 34px color-mix(in srgb, var(--button-primary) 26%, transparent);
+  }
+
+  .brand-btn-primary:active {
+    transform: translateY(1px);
+  }
+
+  .brand-btn-secondary {
+    border: 1px solid var(--panel-border);
+    background: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+    backdrop-filter: blur(12px);
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .brand-btn-secondary:hover {
+    background: var(--button-secondary-hover);
+    border-color: color-mix(in srgb, var(--brand-blue) 24%, var(--panel-border));
+  }
+
+  .brand-btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-accent) 16%, transparent);
+  }
+
+  .brand-input {
+    border: 1px solid var(--panel-border);
+    background: color-mix(in srgb, var(--panel-strong) 88%, transparent);
+    color: var(--brand-ink);
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  }
+
+  .brand-input:focus-visible,
+  .brand-input:focus-within {
+    outline: none;
+    border-color: color-mix(in srgb, var(--brand-accent) 36%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  }
+
+}

@@ -1,0 +1,659 @@
+{
+  "name": "API Glass Dashboard",
+  "version": "2.0.0",
+  "summary": "A reusable premium enterprise dashboard design system with layered glass surfaces, soft gradients, rounded geometry, restrained branding, and first-class light/dark themes.",
+  "intent": {
+    "goal": "Make multiple apps feel like the same product family without copying full screens.",
+    "success_criteria": [
+      "New apps can recreate the same visual language from tokens and shared components.",
+      "Codex can read this file and produce UI consistent with the system.",
+      "Visual refactors can be separated from business-logic changes.",
+      "The system can evolve with versioning instead of ad hoc per-project styling."
+    ],
+    "design_principles": [
+      "Prefer tokens and shared primitives over one-off styling.",
+      "Favor layered translucent surfaces over flat boxes.",
+      "Use accent color sparingly for emphasis and status, not as a default fill.",
+      "Keep layouts clean, spacious, and dashboard-oriented.",
+      "Preserve a premium enterprise tone instead of playful consumer styling.",
+      "Support dark mode as a first-class mode, not a late-stage inversion.",
+      "Branding, logo usage, and layout tone are part of the system, not separate concerns."
+    ]
+  },
+  "brand": {
+    "name": "API Global Solutions",
+    "personality": [
+      "clean",
+      "premium",
+      "enterprise",
+      "calm",
+      "data-driven",
+      "geographic"
+    ],
+    "keywords": [
+      "glassmorphism",
+      "soft gradients",
+      "rounded surfaces",
+      "muted copy",
+      "dashboard",
+      "map-oriented"
+    ],
+    "voice": {
+      "tone": [
+        "clear",
+        "professional",
+        "measured",
+        "confident"
+      ],
+      "avoid": [
+        "playful marketing tone",
+        "excessive hype",
+        "casual consumer-app slang"
+      ]
+    },
+    "logo": {
+      "component": "src/components/brand-logo.tsx",
+      "assets": {
+        "primary_light": "public/brand/API-green.svg",
+        "primary_dark": "public/brand/API-green-white.svg",
+        "compact_dark": "public/brand/API-white.svg",
+        "alternate_blue": "public/brand/API-blue.svg"
+      },
+      "variants": [
+        "full",
+        "compact"
+      ],
+      "usage_rules": [
+        "Use the full logo by default in hero or primary brand areas.",
+        "Use the compact logo only when the layout is tight or when a reduced brand mark is needed.",
+        "Use the light-theme logo on light backgrounds.",
+        "Use the dark-theme logo variant on dark surfaces.",
+        "Do not recolor logo assets ad hoc in product UI.",
+        "Do not stretch the logo disproportionately.",
+        "Prefer placing the logo inside premium surface areas with ample whitespace."
+      ],
+      "layout_guidance": {
+        "recommended_widths": [
+          "140px",
+          "148px",
+          "172px"
+        ],
+        "placement_rules": [
+          "Place the logo near the top-left of hero or admin headers.",
+          "Keep clear space around the logo equal to at least the height of the letter A in the mark.",
+          "Do not crowd the logo with dense controls or body copy."
+        ]
+      }
+    }
+  },
+  "implementation": {
+    "framework": "Next.js App Router",
+    "ui_stack": [
+      "React",
+      "TypeScript",
+      "Tailwind CSS v4"
+    ],
+    "token_source": "src/app/tokens.css",
+    "global_styles": "src/app/globals.css",
+    "primitive_components": [
+      "src/components/ui/button.tsx",
+      "src/components/ui/field.tsx",
+      "src/components/ui/badge.tsx",
+      "src/components/ui/surface.tsx"
+    ],
+    "pattern_components": [
+      "src/components/ui/section-header.tsx",
+      "src/components/ui/info-card.tsx"
+    ],
+    "showcase_route": "/design-system",
+    "implementation_portability": {
+      "tailwind_projects": "Use CSS variables for tokens and thin wrapper components for repeated variants.",
+      "non_tailwind_projects": "Preserve token semantics, component roles, spacing, and hierarchy in the local styling system.",
+      "minimum_reuse_units": [
+        "tokens",
+        "surface",
+        "button",
+        "field",
+        "section header",
+        "info card"
+      ]
+    }
+  },
+  "tokens": {
+    "typography": {
+      "font_families": {
+        "ui": "Plus Jakarta Sans",
+        "mono": "IBM Plex Mono"
+      },
+      "font_weights": {
+        "regular": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700
+      },
+      "scale": {
+        "hero": {
+          "size": "4rem to 4.35rem",
+          "line_height": "0.96",
+          "weight": 600
+        },
+        "display": {
+          "size": "3rem to 3.5rem",
+          "line_height": "1.0",
+          "weight": 600
+        },
+        "h1": {
+          "size": "2.25rem to 2.5rem",
+          "line_height": "1.05",
+          "weight": 600
+        },
+        "h2": {
+          "size": "1.5rem to 1.875rem",
+          "line_height": "1.15",
+          "weight": 600
+        },
+        "h3": {
+          "size": "1.125rem",
+          "line_height": "1.2",
+          "weight": 600
+        },
+        "body": {
+          "size": "1rem",
+          "line_height": "1.6",
+          "weight": 400
+        },
+        "body_sm": {
+          "size": "0.875rem",
+          "line_height": "1.5",
+          "weight": 400
+        },
+        "caption": {
+          "size": "0.75rem",
+          "line_height": "1.4",
+          "weight": 500
+        },
+        "eyebrow": {
+          "size": "0.7rem",
+          "line_height": "1.2",
+          "weight": 700,
+          "letter_spacing": "0.24em",
+          "transform": "uppercase"
+        }
+      },
+      "style_rules": [
+        "Use the UI font for all interface text.",
+        "Reserve mono for technical or dense structured values.",
+        "Use large, bold, low-line-height headings in hero sections.",
+        "Use muted secondary copy instead of reducing layout density."
+      ]
+    },
+    "color": {
+      "light": {
+        "brand_green": "#78bc43",
+        "brand_blue": "#273b6e",
+        "brand_gray": "#7f7f7f",
+        "brand_cloud": "#d4d9e1",
+        "brand_ink": "#273b6e",
+        "text_muted": "#59657d",
+        "page_bg": "linear-gradient(145deg, #f4f8ef 0%, #edf2f8 46%, #dfe6f0 100%)",
+        "page_grid": "rgba(39, 59, 110, 0.08)",
+        "panel": "rgba(255, 255, 255, 0.76)",
+        "panel_strong": "rgba(255, 255, 255, 0.9)",
+        "panel_soft": "rgba(255, 255, 255, 0.62)",
+        "panel_border": "rgba(39, 59, 110, 0.14)",
+        "brand_accent": "#78bc43",
+        "brand_accent_soft": "rgba(120, 188, 67, 0.18)",
+        "brand_highlight": "#273b6e",
+        "brand_highlight_soft": "rgba(39, 59, 110, 0.14)"
+      },
+      "dark": {
+        "brand_ink": "#f3f7fb",
+        "text_muted": "#b8c1d1",
+        "page_bg": "linear-gradient(145deg, #0d1730 0%, #17213d 48%, #263559 100%)",
+        "page_grid": "rgba(212, 217, 225, 0.08)",
+        "panel": "rgba(18, 29, 57, 0.76)",
+        "panel_strong": "rgba(18, 29, 57, 0.88)",
+        "panel_soft": "rgba(212, 217, 225, 0.07)",
+        "panel_border": "rgba(212, 217, 225, 0.12)",
+        "brand_accent": "#8ecf5f",
+        "brand_accent_soft": "rgba(120, 188, 67, 0.2)",
+        "brand_highlight": "#d4d9e1",
+        "brand_highlight_soft": "rgba(212, 217, 225, 0.16)"
+      },
+      "semantic": {
+        "status_good_bg": "rgba(120, 188, 67, 0.14)",
+        "status_good_text": "#3c6920",
+        "status_warning_bg": "rgba(39, 59, 110, 0.12)",
+        "status_warning_text": "#273b6e",
+        "status_neutral_bg": "rgba(127, 127, 127, 0.12)",
+        "status_neutral_text": "#5f5f5f",
+        "danger_bg": "color-mix(in srgb, #fff1f1 78%, var(--button-secondary-bg))",
+        "danger_text": "#8b2f2f"
+      }
+    },
+    "spacing": {
+      "scale": {
+        "0": "0",
+        "1": "0.25rem",
+        "2": "0.5rem",
+        "3": "0.75rem",
+        "4": "1rem",
+        "5": "1.25rem",
+        "6": "1.5rem",
+        "8": "2rem",
+        "10": "2.5rem",
+        "12": "3rem",
+        "16": "4rem"
+      },
+      "rules": [
+        "Default to generous internal spacing in cards and panels.",
+        "Prefer 1rem to 1.5rem gaps for related controls.",
+        "Use 2rem or more between major page sections."
+      ]
+    },
+    "radius": {
+      "hero": "2.75rem",
+      "panel": "2.2rem",
+      "card": "2rem",
+      "subcard": "1.5rem",
+      "input": "1.5rem to 2rem",
+      "pill": "999px"
+    },
+    "border": {
+      "thin": "1px",
+      "emphasis": "2px",
+      "rules": [
+        "Default borders should be subtle and token-driven.",
+        "Dashed borders are appropriate for upload zones and optional drop targets."
+      ]
+    },
+    "shadow": {
+      "panel": "0 24px 60px rgba(39, 59, 110, 0.12)",
+      "button_primary": "0 16px 30px color-mix(in srgb, var(--button-primary) 22%, transparent)",
+      "soft_inner": "inset 0 1px 0 rgba(255, 255, 255, 0.18)"
+    },
+    "backdrop": {
+      "panel_blur": "14px",
+      "strong_blur": "16px",
+      "soft_blur": "12px"
+    },
+    "motion": {
+      "duration": {
+        "fast": "180ms",
+        "standard": "300ms"
+      },
+      "easing": {
+        "default": "ease",
+        "entrance": "ease-out"
+      },
+      "rules": [
+        "Use short, restrained transitions.",
+        "Favor opacity, transform, border-color, box-shadow, and background-color changes.",
+        "Avoid flashy or exaggerated motion."
+      ]
+    },
+    "layering": {
+      "page_overlay": 0,
+      "surface_content": 1,
+      "floating_ui": 20,
+      "rules": [
+        "Keep decorative atmosphere beneath content.",
+        "Reserve high stacking values for tooltips and floating interactive elements."
+      ]
+    },
+    "breakpoints": {
+      "sm": "640px",
+      "md": "768px",
+      "lg": "1024px",
+      "xl": "1280px"
+    }
+  },
+  "accessibility": {
+    "requirements": [
+      "Interactive elements must have visible focus states.",
+      "Color alone must not carry critical meaning.",
+      "Support keyboard interaction for toggles, disclosure panels, file upload affordances, and form controls.",
+      "Use semantic HTML whenever possible before introducing ARIA.",
+      "Preserve readable contrast in both light and dark themes."
+    ],
+    "component_notes": {
+      "button": "Buttons must expose disabled state and preserve accessible labels.",
+      "theme_toggle": "Theme switches should expose switch semantics and current state.",
+      "collapsible_sections": "Disclosure controls should expose aria-expanded and aria-controls.",
+      "forms": "Inputs need labels or equivalent accessible names."
+    }
+  },
+  "primitives": {
+    "surface": {
+      "status": "implemented",
+      "variants": [
+        "panel",
+        "panelStrong",
+        "panelSoft",
+        "brand"
+      ],
+      "states": [
+        "default"
+      ],
+      "usage_rules": [
+        "Use panelStrong for hero or high-importance containers.",
+        "Use panel for standard content sections.",
+        "Use panelSoft for nested control areas.",
+        "Use brand for inset cards, summaries, and supporting content."
+      ]
+    },
+    "button": {
+      "status": "implemented",
+      "variants": [
+        "primary",
+        "secondary",
+        "danger"
+      ],
+      "sizes": [
+        "sm",
+        "md"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "usage_rules": [
+        "Use primary for the main action in a section.",
+        "Use secondary for navigation, toggles, and low-emphasis actions.",
+        "Use danger for reset or destructive flows only."
+      ]
+    },
+    "field": {
+      "status": "implemented",
+      "components": [
+        "InputField",
+        "SelectField"
+      ],
+      "states": [
+        "default",
+        "focus",
+        "disabled",
+        "placeholder"
+      ],
+      "usage_rules": [
+        "Use rounded fields with soft surfaces and subtle focus rings.",
+        "Prefer comfortable padding over compact density.",
+        "Keep placeholder and helper text muted."
+      ]
+    },
+    "badge": {
+      "status": "implemented",
+      "usage_rules": [
+        "Use badges for compact labels, not as primary calls to action.",
+        "Keep them uppercase with generous letter spacing."
+      ]
+    },
+    "textarea": {
+      "status": "planned",
+      "base_on": "field"
+    },
+    "checkbox": {
+      "status": "planned"
+    },
+    "radio": {
+      "status": "planned"
+    },
+    "switch": {
+      "status": "partially implemented",
+      "notes": "Theme toggle provides a switch-style interaction pattern."
+    },
+    "dialog": {
+      "status": "planned"
+    },
+    "toast": {
+      "status": "planned"
+    },
+    "tabs": {
+      "status": "planned"
+    },
+    "tooltip": {
+      "status": "partially implemented",
+      "notes": "Inline tooltip pattern exists in coverage metric card."
+    },
+    "table": {
+      "status": "partially implemented",
+      "notes": "Data tables exist as app-specific components; formal generic primitive still needed."
+    },
+    "empty_state": {
+      "status": "partially implemented",
+      "notes": "Pattern exists in page-level usage but not as a standalone generic component."
+    },
+    "loader": {
+      "status": "partially implemented",
+      "notes": "Loading surfaces exist but no shared spinner/loading primitive yet."
+    }
+  },
+  "patterns": {
+    "section_header": {
+      "status": "implemented",
+      "fields": [
+        "eyebrow",
+        "title",
+        "description",
+        "meta"
+      ],
+      "usage_rules": [
+        "Use for section intros with optional right-side action or metadata.",
+        "Keep eyebrow short and uppercase."
+      ]
+    },
+    "info_card": {
+      "status": "implemented",
+      "fields": [
+        "title",
+        "description",
+        "children"
+      ],
+      "usage_rules": [
+        "Use for dataset summaries, compact stats, or support content.",
+        "Place inside larger sections, not as the page shell."
+      ]
+    },
+    "hero_header": {
+      "status": "implemented",
+      "rules": [
+        "Use panelStrong surface.",
+        "Keep logo and title near the top-left.",
+        "Support one or more actions on the right or below the intro copy."
+      ]
+    },
+    "metric_card": {
+      "status": "implemented",
+      "notes": "Represented by SummaryCard and related summary surfaces."
+    },
+    "dashboard_composition": {
+      "status": "implemented",
+      "sections": [
+        "hero",
+        "status or upload area",
+        "controls area",
+        "metrics grid",
+        "visualization surface",
+        "supporting tables or ranked lists"
+      ]
+    },
+    "admin_workbench": {
+      "status": "implemented",
+      "sections": [
+        "admin header",
+        "editor form",
+        "record list",
+        "search or filter control"
+      ]
+    },
+    "form_panel": {
+      "status": "partially implemented"
+    },
+    "empty_state_panel": {
+      "status": "partially implemented"
+    },
+    "upload_dropzone": {
+      "status": "implemented",
+      "notes": "App-specific but reusable as a branded upload pattern."
+    }
+  },
+  "component_inventory": {
+    "implemented_in_repo": [
+      "BrandLogo",
+      "Button",
+      "Badge",
+      "InputField",
+      "SelectField",
+      "Surface",
+      "SectionHeader",
+      "InfoCard",
+      "SummaryCard",
+      "FileDropzone",
+      "DataTable",
+      "ValidationPanel",
+      "ThemeToggle",
+      "TopOverlapList",
+      "CollapsiblePanel"
+    ],
+    "recommended_next_components": [
+      "TextareaField",
+      "Checkbox",
+      "RadioGroup",
+      "Modal",
+      "Toast",
+      "Tabs",
+      "Tooltip",
+      "EmptyState",
+      "Spinner",
+      "AppHeader"
+    ]
+  },
+  "content_rules": {
+    "headings": [
+      "Headings should be short and direct.",
+      "Use eyebrow plus title when section context matters."
+    ],
+    "body_copy": [
+      "Use muted explanatory text under major titles.",
+      "Avoid overly dense paragraphs inside dashboards."
+    ],
+    "labels": [
+      "Use explicit field labels for forms.",
+      "Use uppercase badges and eyebrows sparingly."
+    ],
+    "actions": [
+      "Each section should have one clear primary action at most.",
+      "Secondary actions should visually recede."
+    ]
+  },
+  "layout_rules": {
+    "page_width": "max-width ~ 7xl",
+    "section_spacing": "2rem default between major sections",
+    "alignment": [
+      "Use left-aligned content blocks.",
+      "Prefer grid layouts for metrics and supporting sections.",
+      "Keep hero content readable with controlled max widths."
+    ],
+    "density": [
+      "Prefer breathable spacing over compact enterprise density.",
+      "Use nested soft panels before adding more border complexity."
+    ]
+  },
+  "theme_rules": {
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "requirements": [
+      "Every core surface and control must have light and dark behavior.",
+      "Dark mode should keep the premium glass feel rather than becoming flat charcoal UI.",
+      "Logo variants must respect the active theme."
+    ]
+  },
+  "visual_rules": {
+    "dos": [
+      "Use gradients and atmospheric background effects subtly.",
+      "Use dark mode as a first-class theme, not an afterthought.",
+      "Keep panels rounded and layered.",
+      "Use muted copy for explanatory text.",
+      "Use green accent for emphasis and positive directional cues.",
+      "Treat logo usage as part of the brand system, not a decorative afterthought."
+    ],
+    "donts": [
+      "Do not default to flat white cards everywhere.",
+      "Do not overuse the accent green as a full-page dominant color.",
+      "Do not use sharp corners unless there is a specific reason.",
+      "Do not introduce playful or overly consumer-style visuals.",
+      "Do not mix unrelated visual styles across pages.",
+      "Do not improvise new logo colors or distort the logo mark."
+    ]
+  },
+  "portability": {
+    "required_artifacts_for_reuse": [
+      "design-system.json",
+      "design-system.prompt.md",
+      "src/app/tokens.css",
+      "src/components/ui",
+      "brand logo assets"
+    ],
+    "minimum_for_codex_only_reuse": [
+      "design-system.json",
+      "design-system.prompt.md"
+    ],
+    "best_for_high_fidelity_reuse": [
+      "JSON spec",
+      "prompt file",
+      "token CSS",
+      "primitive components",
+      "brand assets",
+      "design-system showcase route or screenshots"
+    ]
+  },
+  "governance": {
+    "source_of_truth": "This repository is currently the source of truth for the system.",
+    "change_policy": [
+      "Token changes should be made before page-level overrides.",
+      "New components should be added to the design layer before being duplicated in app screens.",
+      "Breaking visual changes should increment the system version.",
+      "Downstream apps should adopt design-system updates intentionally, not by drift."
+    ],
+    "versioning": {
+      "strategy": "semantic-like",
+      "rules": [
+        "Patch: wording or documentation changes with no visual contract changes.",
+        "Minor: additive token/component/pattern updates.",
+        "Major: breaking token renames, behavior changes, or component API shifts."
+      ]
+    }
+  },
+  "roadmap": {
+    "short_term": [
+      "Add missing primitive components like textarea, checkbox, modal, toast, tabs, and tooltip.",
+      "Convert remaining app-specific patterns into more generic reusable components.",
+      "Expand the design-system showcase page with states and usage examples."
+    ],
+    "medium_term": [
+      "Extract design primitives into a shared package or copyable design folder.",
+      "Create screenshot references for key patterns.",
+      "Apply the same system to additional apps to validate portability."
+    ],
+    "long_term": [
+      "Publish the system as an internal package or starter template.",
+      "Introduce automated visual regression tests for core components."
+    ]
+  },
+  "codex_guidance": {
+    "how_to_use": [
+      "Load this file before generating UI in another project.",
+      "Treat tokens and usage rules as constraints, not optional suggestions.",
+      "Prefer implementing primitives first, then composing screens from them.",
+      "If the new project uses Tailwind, map these rules to utility classes and CSS variables.",
+      "If the new project does not use Tailwind, preserve the tokens, component roles, and visual rules in the local styling system.",
+      "Preserve dark mode, branding, and logo rules together with colors and surfaces."
+    ],
+    "important_note": "This file describes the design system. It does not replace the actual CSS and component implementation."
+  }
+}
