@@ -1,12 +1,53 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "./components/ui/button";
-import { CollapsiblePanel } from "./components/ui/collapsible-panel";
-import { FieldGroup, InputField, NumberField, SelectField, TextAreaField } from "./components/ui/field";
-import { InfoCard } from "./components/ui/info-card";
-import { StatCard } from "./components/ui/stat-card";
-import { Surface } from "./components/ui/surface";
-import { ThemeToggle } from "./components/ui/theme-toggle";
-import { ToggleIconButton } from "./components/ui/toggle-icon-button";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Copy,
+  Menu,
+  Moon,
+  MoreHorizontal,
+  Plus,
+  Settings2,
+  Sun,
+  Trash2,
+  ChevronDown
+} from "lucide-react";
+import { toast } from "sonner";
+
+const PayoutDataTable = lazy(() => import("@/components/payout-data-table").then((module) => ({ default: module.PayoutDataTable })));
+const ContractDatePicker = lazy(() => import("@/components/contract-date-picker").then((module) => ({ default: module.ContractDatePicker })));
+const HelpAccordion = lazy(() => import("@/components/help-accordion").then((module) => ({ default: module.HelpAccordion })));
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card as UiCard, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { FieldGroup, InputField, TextAreaField } from "@/components/ui/field";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { applyTheme, getPreferredTheme, type AppTheme } from "./lib/theme";
 
 const uid = () => Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
@@ -486,27 +527,6 @@ export const attemptClipboardWrite = async (
   }
 };
 
-export const buildPayoutCSV = (rows: Array<EventRow & { status?: string }>) => {
-  const NL = String.fromCharCode(10),
-    CR = String.fromCharCode(13);
-  const esc = (v: any) => {
-    const s = (v ?? "").toString();
-    const needs = s.includes(",") || s.includes('"') || s.includes(NL) || s.includes(CR);
-    const out = s.replace(/"/g, '""');
-    return needs ? `"${out}"` : out;
-  };
-  const amt = (x: any) => {
-    const v = n(x);
-    const r = Math.round(v * 100) / 100;
-    return String(r);
-  };
-  const head = ["Date", "Category", "Source", "Label", "Amount", "Status"].join(",");
-  const lines = rows.map((r) =>
-    [esc(r.date || "(No Date)"), esc(r.category || ""), esc(r.source || ""), esc(r.label || ""), amt(r.amount), esc(r.status || PAYOUT_STATUS_LABEL.TO_BE_PAID)].join(",")
-  );
-  return [head, ...lines].join(NL);
-};
-
 const RN = ({ v, set }: { v: number; set: (x: number) => void }) => {
   const [f, setF] = useState(false);
   const [t, setT] = useState(String(v ?? 0));
@@ -614,18 +634,48 @@ const Card = ({
   collapsed?: boolean;
   onToggle?: () => void;
 }) => (
-  <CollapsiblePanel title={t} actions={r} collapsed={collapsed} onToggle={onToggle}>
-    {c}
-  </CollapsiblePanel>
+  <UiCard className="overflow-hidden border-border/80 bg-card/90 shadow-sm backdrop-blur-sm">
+    <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-border/70 pb-4">
+      <div className="space-y-1">
+        <CardTitle className="text-base">{t}</CardTitle>
+      </div>
+      <div className="flex items-center gap-2">
+        {r}
+        {onToggle ? (
+          <Button variant="ghost" size="icon" onClick={onToggle} aria-expanded={!collapsed} aria-label={`${collapsed ? "Expand" : "Collapse"} ${t}`}>
+            <ChevronDown className={cn("size-4 transition-transform", !collapsed && "rotate-180")} />
+          </Button>
+        ) : null}
+      </div>
+    </CardHeader>
+    <div className={cn("grid transition-[grid-template-rows,opacity] duration-300 ease-out", collapsed ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100")}>
+      <div className="min-h-0 overflow-hidden">
+        <CardContent className="pt-6">{c}</CardContent>
+      </div>
+    </div>
+  </UiCard>
 );
 
 const Field = ({ l, children }: { l: string; children: React.ReactNode }) => <FieldGroup label={l}>{children}</FieldGroup>;
 
-const Sel = ({ v, set, children }: { v: any; set: (x: any) => void; children: React.ReactNode }) => (
-  <SelectField value={v} onChange={(e) => set(e.target.value)}>
-    {children}
-  </SelectField>
-);
+const Sel = ({ v, set, children }: { v: any; set: (x: any) => void; children: React.ReactNode }) => {
+  const options = React.Children.toArray(children).filter(React.isValidElement) as Array<React.ReactElement<{ value: string; disabled?: boolean; children: React.ReactNode }>>;
+
+  return (
+    <Select value={String(v)} onValueChange={set}>
+      <SelectTrigger className="h-11 rounded-lg bg-card">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.props.value} value={option.props.value} disabled={option.props.disabled}>
+            {option.props.children}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
 
 const Num = ({ v, set, step = 1, min, disabled = false }: { v: any; set: (x: number) => void; step?: number; min?: number; disabled?: boolean }) => (
   <InputField
@@ -636,6 +686,35 @@ const Num = ({ v, set, step = 1, min, disabled = false }: { v: any; set: (x: num
     disabled={disabled}
     onChange={(e) => set(Number(e.target.value))}
   />
+);
+
+const ConfirmDeleteButton = ({
+  label,
+  description,
+  onConfirm
+}: {
+  label: string;
+  description: string;
+  onConfirm: () => void;
+}) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild>
+      <Button variant="destructive" size="sm">
+        <Trash2 className="size-4" />
+        Remove
+      </Button>
+    </AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{label}</AlertDialogTitle>
+        <AlertDialogDescription>{description}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction onClick={onConfirm}>Remove</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 );
 
 function AppInner() {
@@ -794,10 +873,6 @@ function AppInner() {
   const snap = useMemo(() => JSON.stringify({ cfg, s }, null, 2), [cfg, s]);
   const [j, setJ] = useState(snap);
   useEffect(() => setJ(snap), [snap]);
-  const [copyMsg, setCopyMsg] = useState<string | "">("");
-  const [csvText, setCsvText] = useState<string>("");
-  const [showCsv, setShowCsv] = useState(false);
-  const csvRef = useRef<HTMLTextAreaElement | null>(null);
   const settingsRef = useRef<HTMLTextAreaElement | null>(null);
   const [theme, setTheme] = useState<AppTheme>(() => {
     if (typeof document !== "undefined") {
@@ -833,10 +908,9 @@ function AppInner() {
     const txt = JSON.stringify({ cfg, s }, null, 2);
     const ok = await attemptClipboardWrite(txt);
     if (ok) {
-      setCopyMsg("Copied");
-      setTimeout(() => setCopyMsg(""), 1200);
+      toast.success("JSON snapshot copied.");
     } else {
-      setCopyMsg("Clipboard blocked — copy from Settings JSON.");
+      toast.warning("Clipboard blocked. Copy from Settings JSON instead.");
       setTab("SETTINGS");
       setTimeout(() => {
         try {
@@ -844,42 +918,16 @@ function AppInner() {
           settingsRef.current?.select();
         } catch {}
       }, 0);
-      setTimeout(() => setCopyMsg(""), 2500);
     }
-  };
-  const showCSV = () => {
-    try {
-      setCsvText(
-        buildPayoutCSV(
-          eventRows.map((e) => ({
-            date: e.date,
-            category: e.category,
-            source: e.source,
-            label: e.label,
-            amount: e.amount,
-            status: PAYOUT_STATUS_LABEL[getStatus(e.key)]
-          }))
-        )
-      );
-      setShowCsv(true);
-    } catch {}
-  };
-  const selectCSV = () => {
-    try {
-      csvRef.current?.focus();
-      csvRef.current?.select();
-    } catch {}
   };
   const apply = () => {
     try {
       const p = JSON.parse(j);
       if (p?.cfg) setCfg(p.cfg);
       if (p?.s) setS({ ...p.s, payoutStatuses: p.s?.payoutStatuses ?? {} });
-      setCopyMsg("Applied");
-      setTimeout(() => setCopyMsg(""), 1200);
+      toast.success("Settings applied.");
     } catch {
-      setCopyMsg("Invalid JSON");
-      setTimeout(() => setCopyMsg(""), 2000);
+      toast.error("Invalid JSON.");
     }
   };
   const summaryCards = [
@@ -889,41 +937,105 @@ function AppInner() {
     { title: "SPIFF", value: money(totals.sp) },
     { title: "Total", value: money(totals.all) }
   ];
+  const tabItems: Array<{ value: "INPUTS" | "RESULTS" | "SETTINGS" | "HELP"; label: string }> = [
+    { value: "INPUTS", label: "Inputs" },
+    { value: "RESULTS", label: "Results" },
+    { value: "HELP", label: "Help" },
+    ...(tab === "SETTINGS" ? [{ value: "SETTINGS" as const, label: "Settings" }] : [])
+  ];
 
   return (
-    <div className="app-shell min-h-screen ui-wrap">
-      <div className="app-container ui-container">
-        <div className="app-header">
-          <div className="header-bar">
-            <div className="brand-lockup">
-              <div className="brand-logo-wrap">
-                <img className="brand-logo" src={headerLogoSrc} alt="Accommodations Plus International logo" />
-              </div>
-              <div className="brand-copy">
-                <h1 className="app-title text-4xl leading-[0.96] font-semibold md:text-6xl xl:text-[4.35rem]">BD Comp Plan Calculator</h1>
-                <p className="ui-text-muted max-w-[44rem] text-base md:text-lg">
-                  Calculate sign-on, recurrent, and SPIFF compensation in a single planning workspace without changing plan logic.
-                </p>
-                <div className="app-actions menu-panel ui-row">
-                  <Button onClick={() => setTab("INPUTS")} variant={tab === "INPUTS" ? "primary" : "secondary"} size="sm">Inputs</Button>
-                  <Button onClick={() => setTab("RESULTS")} variant={tab === "RESULTS" ? "primary" : "secondary"} size="sm">Results</Button>
-                  <Button onClick={() => setTab("SETTINGS")} variant={tab === "SETTINGS" ? "primary" : "secondary"} size="sm">Settings</Button>
-                  <Button onClick={() => setTab("HELP")} variant={tab === "HELP" ? "primary" : "secondary"} size="sm">Help</Button>
-                  <Button onClick={() => void doCopy()} variant="secondary" size="sm">Copy JSON</Button>
-                  {copyMsg ? (
-                    <div role="status" aria-live="polite" className="ui-pill ui-pill-surface text-xs font-extrabold">
-                      {copyMsg}
-                    </div>
-                  ) : null}
+    <TooltipProvider>
+      <Tabs value={tab} onValueChange={(value) => setTab(value as "INPUTS" | "RESULTS" | "SETTINGS" | "HELP")} className="app-shell min-h-screen ui-wrap">
+        <div className="app-container ui-container">
+          <div className="app-header">
+            <UiCard className="header-bar border-border/80 bg-card/90 shadow-sm backdrop-blur-md">
+              <div className="brand-lockup">
+                <div className="brand-logo-wrap">
+                  <img className="brand-logo" src={headerLogoSrc} alt="Accommodations Plus International logo" />
+                </div>
+                <div className="brand-copy">
+                  <h1 className="app-title text-4xl leading-[0.96] font-semibold md:text-6xl xl:text-[4.35rem]">BD Comp Plan Calculator</h1>
+                  <p className="ui-text-muted max-w-[44rem] text-base md:text-lg">
+                    Calculate sign-on, recurrent, and SPIFF compensation in a single planning workspace without changing plan logic.
+                  </p>
+                  <div className="hidden md:block">
+                    <TabsList className="bg-card/85">
+                      {tabItems.map((item) => (
+                        <TabsTrigger key={item.value} value={item.value}>
+                          {item.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </div>
                 </div>
               </div>
-            </div>
-            <ThemeToggle className="header-theme-toggle" theme={theme} onToggle={() => setTheme(theme === "dark" ? "light" : "dark")} />
-          </div>
-        </div>
 
-        {tab === "INPUTS" ? (
-          <div className="ui-grid">
+              <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="md:hidden">
+                      <Menu className="size-4" />
+                      <span className="sr-only">Open navigation</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right">
+                    <SheetHeader>
+                      <SheetTitle>Workspace</SheetTitle>
+                      <SheetDescription>Switch sections and jump to admin tools.</SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6 grid gap-2">
+                      {tabItems.map((item) => (
+                        <SheetClose key={item.value} asChild>
+                          <Button variant={tab === item.value ? "primary" : "outline"} className="justify-start" onClick={() => setTab(item.value)}>
+                            {item.label}
+                          </Button>
+                        </SheetClose>
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+                      <span className="sr-only">Toggle theme</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}</TooltipContent>
+                </Tooltip>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <MoreHorizontal className="size-4" />
+                      <span className="sr-only">Open actions</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => void doCopy()}>
+                      <Copy className="size-4" />
+                      Copy JSON snapshot
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setTab("SETTINGS");
+                        setTimeout(() => settingsRef.current?.focus(), 0);
+                      }}
+                    >
+                      <Settings2 className="size-4" />
+                      Open settings
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </UiCard>
+          </div>
+
+          <TabsContent value="INPUTS" className="ui-grid mt-0">
             {Card({
               t: "Comp Plan Controls",
               collapsed: !inputSections.controls,
@@ -947,6 +1059,7 @@ function AppInner() {
                         </Field>
                       </div>
                       <div className="mt-2.5 ui-stack ui-text-13">
+                        <Progress value={Math.min(100, Math.max(0, quota.achievement * 100))} />
                         <div className="flex justify-between">
                           <span className="ui-text-muted">Achievement</span>
                           <b>{pct(quota.achievement)}</b>
@@ -956,13 +1069,9 @@ function AppInner() {
                           <b>{pct(quota.factor)}</b>
                         </div>
                         <div className="ui-text-xs ui-text-muted">{quota.note}</div>
-                        <label className="flex items-center gap-2 ui-text-xs ui-text-muted">
-                          <input
-                            type="checkbox"
-                            checked={s.includeQuotaInPayoutSchedule}
-                            onChange={(e) => setState({ includeQuotaInPayoutSchedule: e.target.checked })}
-                          />
-                          Include in Payout Schedule
+                        <label className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-card/70 px-3 py-2 text-xs text-muted-foreground">
+                          <span>Include in payout schedule</span>
+                          <Switch checked={s.includeQuotaInPayoutSchedule} onCheckedChange={(checked) => setState({ includeQuotaInPayoutSchedule: checked })} />
                         </label>
                       </div>
                     </div>
@@ -978,6 +1087,7 @@ function AppInner() {
                         </Field>
                       </div>
                       <div className="mt-2.5 ui-stack ui-text-13">
+                        <Progress value={Math.min(100, Math.max((n(s.kpiRN) / 50000) * 100, (n(s.kpiRev) / 500000) * 100))} />
                         <div className="flex justify-between">
                           <span className="ui-text-muted">KPI</span>
                           <b>{kpiOk ? "Eligible" : "Not Eligible"}</b>
@@ -999,7 +1109,10 @@ function AppInner() {
                   c: (
                 <div className="ui-grid">
                   <div className="ui-row">
-                    <Button onClick={addContract} variant="secondary" size="sm">Add Contract</Button>
+                    <Button onClick={addContract} variant="primary" size="sm">
+                      <Plus className="size-4" />
+                      Add Contract
+                    </Button>
                   </div>
                   {cRank.map((c: any) => {
                     const isSD = c.type === "SD_ACCOUNT";
@@ -1011,29 +1124,29 @@ function AppInner() {
                     const timing = computeContractTiming(cfg, c, c.rank ?? null, pre);
                     const isOpen = isContractSectionOpen(c.id);
                     return (
-                      <div key={c.id} className="ui-box">
+                      <UiCard key={c.id} className="border-border/80 bg-muted/10 shadow-none">
+                        <CardContent className="p-4">
                         <div className="ui-row-space">
                           <div className="ui-row flex-1 min-w-[260px]">
-                            <button
+                            <Button
                               type="button"
+                              variant="ghost"
+                              size="icon"
                               onClick={() => toggleContractSection(c.id)}
                               aria-expanded={isOpen}
                               aria-label={`${isOpen ? "Collapse" : "Expand"} ${c.name || "contract"}`}
-                              className="brand-btn-secondary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
                             >
-                              <svg
-                                viewBox="0 0 20 20"
-                                fill="none"
-                                aria-hidden="true"
-                                className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                              >
-                                <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </button>
+                              <ChevronDown className={cn("size-4 transition-transform", isOpen && "rotate-180")} />
+                            </Button>
                             <InputField className="flex-1 min-w-[220px] font-extrabold" value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} />
+                            <Badge variant="default">Rank {c.rank ?? "-"}</Badge>
                           </div>
                           <div className="ui-row">
-                            <Button onClick={() => delContract(c.id)} variant="secondary" size="sm">Remove</Button>
+                            <ConfirmDeleteButton
+                              label="Remove contract?"
+                              description={`This will remove ${c.name || "this contract"} from the calculator.`}
+                              onConfirm={() => delContract(c.id)}
+                            />
                           </div>
                         </div>
                         {r.warnings?.length ? <div className="mt-2 ui-text-xs ui-text-muted">{r.warnings.join(" · ")}</div> : null}
@@ -1100,10 +1213,14 @@ function AppInner() {
                                 <PctIn v={c.bdShare} set={(v) => setContract(c.id, { bdShare: v })} />
                               </Field>
                               <Field l="Contract Sign Date">
-                                <InputField type="date" value={c.startDate} onChange={(e) => setContract(c.id, { startDate: e.target.value })} />
+                                <Suspense fallback={<InputField value={c.startDate} readOnly placeholder="Loading date picker..." />}>
+                                  <ContractDatePicker value={c.startDate} onChange={(value) => setContract(c.id, { startDate: value })} />
+                                </Suspense>
                               </Field>
                               <Field l="Close Date">
-                                <InputField type="date" value={c.closeDate} onChange={(e) => setContract(c.id, { closeDate: e.target.value })} />
+                                <Suspense fallback={<InputField value={c.closeDate} readOnly placeholder="Loading date picker..." />}>
+                                  <ContractDatePicker value={c.closeDate} onChange={(value) => setContract(c.id, { closeDate: value })} />
+                                </Suspense>
                               </Field>
                               {!isSD ? (
                                 <Field l="Payout Model">
@@ -1160,25 +1277,25 @@ function AppInner() {
 
                             <div className="ui-box ui-box-alt mt-2.5">
                               <div className="ui-text-xs ui-text-muted ui-title">Timing Preview</div>
-                              <div className="mt-2 ui-stack [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
-                                {timing.map((t: any, i: number) => (
-                                  <div
-                                    key={i}
-                                    className="ui-row-space ui-surface px-2.5 py-2 ui-text-13"
-                                  >
-                                    <div className="min-w-0 flex-1">
-                                      <b>{t.date || "(No Date)"}</b> <span className="ui-text-muted">{t.label}</span>
+                              <ScrollArea className="mt-2 max-h-56">
+                                <div className="ui-stack [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))] pr-3">
+                                  {timing.map((t: any, i: number) => (
+                                    <div key={i} className="ui-row-space ui-surface px-2.5 py-2 ui-text-13">
+                                      <div className="min-w-0 flex-1">
+                                        <b>{t.date || "(No Date)"}</b> <span className="ui-text-muted">{t.label}</span>
+                                      </div>
+                                      <div>
+                                        <b>{money(t.amount)}</b>
+                                      </div>
                                     </div>
-                                    <div>
-                                      <b>{money(t.amount)}</b>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
+                                  ))}
+                                </div>
+                              </ScrollArea>
                             </div>
                           </div>
                         </div>
-                      </div>
+                        </CardContent>
+                      </UiCard>
                     );
                   })}
                 </div>
@@ -1192,7 +1309,10 @@ function AppInner() {
               c: (
                 <div className="ui-grid-tight">
                   <div className="ui-row">
-                    <Button onClick={addAcct} variant="secondary" size="sm">Add Account</Button>
+                    <Button onClick={addAcct} variant="primary" size="sm">
+                      <Plus className="size-4" />
+                      Add Account
+                    </Button>
                   </div>
                   {s.accts.length ? (
                     <div className="account-grid account-grid--header mb-1 items-center gap-2 ui-text-xs ui-text-muted">
@@ -1207,8 +1327,9 @@ function AppInner() {
                   ) : null}
                   {s.accts.map((a) => (
                     <div key={a.id} className="account-grid account-grid--row grid items-center gap-2">
-                      <label className="flex items-center gap-1.5 ui-text-13">
-                        <input type="checkbox" checked={a.include} onChange={(e) => setAcct(a.id, { include: e.target.checked })} /> include
+                      <label className="flex items-center gap-2 ui-text-13">
+                        <Checkbox checked={a.include} onCheckedChange={(checked) => setAcct(a.id, { include: checked === true })} />
+                        include
                       </label>
                       <InputField aria-label="Account Name" value={a.name} onChange={(e) => setAcct(a.id, { name: e.target.value })} />
                       <Sel v={a.managedBy} set={(v: any) => setAcct(a.id, { managedBy: v })}>
@@ -1218,7 +1339,11 @@ function AppInner() {
                       <USD v={a.projectedRevenue} set={(v) => setAcct(a.id, { projectedRevenue: v })} />
                       <USD v={a.actualRevenue} set={(v) => setAcct(a.id, { actualRevenue: v })} />
                       <InputField aria-label="Notes" value={a.note || ""} onChange={(e) => setAcct(a.id, { note: e.target.value })} />
-                      <Button onClick={() => delAcct(a.id)} variant="secondary" size="sm">Remove</Button>
+                      <ConfirmDeleteButton
+                        label="Remove covered account?"
+                        description={`This will remove ${a.name || "this account"} from recurrent payout calculations.`}
+                        onConfirm={() => delAcct(a.id)}
+                      />
                     </div>
                   ))}
                   <div className="mt-2 ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
@@ -1294,8 +1419,9 @@ function AppInner() {
                       </div>
                     </div>
                   </div>
-                  <label className="flex items-center gap-2 ui-text-13">
-                    <input type="checkbox" checked={s.sp.all3} onChange={(e) => setState({ sp: { ...s.sp, all3: e.target.checked } })} /> All 3 SPIFFs Completed Within 12 Months
+                  <label className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-card/70 px-3 py-3 ui-text-13">
+                    <span>All 3 SPIFFs Completed Within 12 Months</span>
+                    <Switch checked={s.sp.all3} onCheckedChange={(checked) => setState({ sp: { ...s.sp, all3: checked } })} />
                   </label>
                   <div className="ui-box flex flex-wrap justify-between gap-2.5">
                     <b>SPIFF total</b>
@@ -1304,124 +1430,72 @@ function AppInner() {
                 </div>
               )
             })}
-          </div>
-        ) : null}
+          </TabsContent>
 
-        {tab === "RESULTS" ? (
-          <div className="ui-grid">
+          <TabsContent value="RESULTS" className="ui-grid mt-0">
             <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
               {summaryCards.map((card) => (
-                <InfoCard key={String(card.title)} title={card.title} className="rounded-[1.6rem] px-4 py-4">
-                  <div className="ui-stat">{card.value}</div>
-                  {card.detail ? <div className={`ui-text-xs ui-text-muted mt-2 ${card.preserveBreaks ? "whitespace-pre-line" : ""}`}>{card.detail}</div> : null}
-                </InfoCard>
+                <UiCard key={String(card.title)} className="rounded-[1.35rem] border-border/80 bg-card/90 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardDescription className="whitespace-nowrap text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                      {card.title}
+                    </CardDescription>
+                    <CardTitle className="ui-stat">{card.value}</CardTitle>
+                  </CardHeader>
+                  {card.detail ? (
+                    <CardContent className={cn("pt-0 text-xs text-muted-foreground", card.preserveBreaks && "whitespace-pre-line")}>{card.detail}</CardContent>
+                  ) : null}
+                </UiCard>
               ))}
             </div>
             {Card({
               t: "Payout Schedule - subject to annual room quota been met",
-              r: <div className="ui-row">{showCsv ? <Button onClick={() => setShowCsv(false)} variant="secondary" size="sm">Hide CSV</Button> : <Button onClick={showCSV} variant="primary" size="sm">Show CSV</Button>}</div>,
               c: (
                 <div className="ui-grid-tight">
-                  {showCsv && csvText ? (
-                    <div className="ui-box ui-box-alt">
-                      <div className="ui-row-space">
-                        <div className="ui-text-xs ui-text-muted ui-title">CSV Output</div>
-                        <div className="ui-row">
-                          <Button onClick={selectCSV} variant="secondary" size="sm">Select CSV</Button>
-                        </div>
-                      </div>
-                      <div className="mt-2 ui-text-xs ui-text-muted">Copy all text and save as a .csv file, then open in Excel.</div>
-                      <textarea
-                        className="mt-2 h-[180px] ui-input font-mono ui-text-xs"
-                        ref={csvRef}
-                        value={csvText}
-                        readOnly
-                      />
-                    </div>
-                  ) : null}
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse ui-text-13">
-                      <thead>
-                        <tr className="ui-title text-[var(--brand-ink)]/85">
-                          <th className="p-2 text-center ui-text-13">Date</th>
-                          <th className="p-2 text-center ui-text-13">Category</th>
-                          <th className="p-2 text-center ui-text-13">Source</th>
-                          <th className="p-2 text-center ui-text-13">Label</th>
-                          <th className="p-2 text-center ui-text-13">Amount</th>
-                          <th className="p-2 text-center ui-text-13">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {eventRows.map((e) => {
-                          const status = getStatus(e.key);
-                          return (
-                        <tr key={e.key} className="payout-row border-t border-[var(--panel-border)]" data-status={status}>
-                            <td className="p-2 font-extrabold">{e.date || "(No Date)"}</td>
-                            <td className="p-2">{e.category}</td>
-                            <td className="p-2">{e.source}</td>
-                            <td className="p-2">{e.label}</td>
-                            <td className="p-2 text-right font-black">{money(e.amount)}</td>
-                            <td className="p-2 text-center">
-                              <select
-                                className="status-select mx-auto block rounded-full border px-2 py-1 text-xs font-bold"
-                                value={status}
-                                onChange={(ev) => setStatus(e.key, ev.target.value as PayoutStatus)}
-                                aria-label={`Payout status for ${e.source} ${e.label}`}
-                                data-status={status}
-                              >
-                                <option value="TO_BE_PAID">{PAYOUT_STATUS_LABEL.TO_BE_PAID}</option>
-                                <option value="PAID">{PAYOUT_STATUS_LABEL.PAID}</option>
-                                <option value="PENDING">{PAYOUT_STATUS_LABEL.PENDING}</option>
-                              </select>
-                            </td>
-                          </tr>
-                          );
-                        })}
-                        {eventRows.length === 0 ? (
-                          <tr>
-                            <td colSpan={6} className="p-2.5 ui-text-muted">
-                              No Payouts Yet.
-                            </td>
-                          </tr>
-                        ) : null}
-                      </tbody>
-                    </table>
-                  </div>
+                  <Suspense fallback={<div className="rounded-lg border border-border/70 bg-card/60 p-6 text-sm text-muted-foreground">Loading payout table...</div>}>
+                    <PayoutDataTable
+                      rows={eventRows.map((e) => ({
+                        ...e,
+                        status: getStatus(e.key)
+                      }))}
+                      money={(value) => money(value)}
+                      onStatusChange={setStatus}
+                    />
+                  </Suspense>
                 </div>
               )
             })}
-          </div>
-        ) : null}
+          </TabsContent>
 
-        {tab === "SETTINGS" ? (
-          <div className="ui-grid">
+          <TabsContent value="SETTINGS" className="ui-grid mt-0">
             {Card({
               t: "Settings JSON",
               r: (
                 <div className="ui-row">
-                  <Button onClick={() => void doCopy()} variant="secondary" size="sm">Copy</Button>
-                  <Button onClick={apply} variant="secondary" size="sm">Apply</Button>
-                  {copyMsg ? (
-                    <div role="status" aria-live="polite" className="ui-pill ui-pill-surface ui-text-xs font-extrabold">
-                      {copyMsg}
-                    </div>
-                  ) : null}
+                  <Button onClick={() => void doCopy()} variant="outline" size="sm">
+                    <Copy className="size-4" />
+                    Copy
+                  </Button>
+                  <Button onClick={apply} variant="primary" size="sm">
+                    <Settings2 className="size-4" />
+                    Apply
+                  </Button>
                 </div>
               ),
               c: (
-                <TextAreaField
-                  className="h-[520px] font-mono ui-text-xs"
-                  ref={settingsRef}
-                  value={j}
-                  onChange={(e) => setJ(e.target.value)}
-                />
+                <ScrollArea className="h-[520px] rounded-lg border border-border/70">
+                  <TextAreaField
+                    className="h-[520px] border-0 font-mono ui-text-xs shadow-none"
+                    ref={settingsRef}
+                    value={j}
+                    onChange={(e) => setJ(e.target.value)}
+                  />
+                </ScrollArea>
               )
             })}
-          </div>
-        ) : null}
+          </TabsContent>
 
-        {tab === "HELP" ? (
-          <div className="ui-grid">
+          <TabsContent value="HELP" className="ui-grid mt-0">
             {Card({
               t: "How This Calculator Works",
               c: (
@@ -1430,112 +1504,9 @@ function AppInner() {
                     This tool estimates total BD compensation by combining three payout types: Sign-On, Recurrent, and SPIFFs. The flow is simple:
                     enter inputs, review results, and export the payout schedule if needed.
                   </div>
-                  <div className="ui-box ui-box-alt">
-                    <div className="mb-1.5 ui-title">Quick Flow</div>
-                    <div>1) Inputs: enter plan controls, contracts, accounts, and SPIFF progress.</div>
-                    <div>2) Results: review totals and payout schedule.</div>
-                    <div>3) Settings: adjust bands and rates only if you are a plan admin.</div>
-                  </div>
-                </div>
-              )
-            })}
-
-            {Card({
-              t: "Plan Controls",
-              c: (
-                <div className="ui-grid-tight text-sm leading-6">
-                  <div>
-                    <b>Plan Year</b> drives all payout dates (year-end or following year where applicable).
-                  </div>
-                  <div>
-                    <b>Quota Achievement</b> applies a factor to Sign-On payouts. It floors at 70% and caps at 105%.
-                  </div>
-                  <div>
-                    <b>KPI Gate</b> unlocks Recurrent payouts. Eligibility requires at least 50,000 new annualized room nights/trips or $500,000 in new annualized revenue.
-                  </div>
-                </div>
-              )
-            })}
-
-            {Card({
-              t: "New Contracts (Sign-On)",
-              c: (
-                <div className="ui-grid-tight text-sm leading-6">
-                  <div>
-                    Add each new contract and enter the contract type, term, room nights (or annualized revenue for SD), BD share, and relevant dates.
-                  </div>
-                  <div>
-                    <b>Contract Type</b> determines the rate table:
-                    Network GTA and Sourcing-Only use room-night bands; SD Account uses annualized revenue.
-                  </div>
-                  <div>
-                    <b>Payout Model</b> controls split timing: Crew is 70/30 and DPAX is 50/50.
-                  </div>
-                  <div>
-                    <b>Payout Scenario</b> adjusts timing logic. Use the Timing Preview to confirm sign-on dates and amounts.
-                  </div>
-                  <div>
-                    For standard timing, year-2 payouts are adjusted by Actual vs. Projected Room Nights.
-                  </div>
-                </div>
-              )
-            })}
-
-            {Card({
-              t: "Covered Accounts (Recurrent)",
-              c: (
-                <div className="ui-grid-tight text-sm leading-6">
-                  <div>
-                    Add each covered account, set Projected and Actual revenue, and mark whether it should be included.
-                  </div>
-                  <div>
-                    <b>Managed By</b> controls the share used in the calculation (AM or SD).
-                  </div>
-                  <div>
-                    Recurrent payouts only apply if the KPI gate is met. Projected pays 25% at Q3; actual true-up pays in Q1 of the following year.
-                  </div>
-                </div>
-              )
-            })}
-
-            {Card({
-              t: "SPIFFs",
-              c: (
-                <div className="ui-grid-tight text-sm leading-6">
-                  <div>
-                    SPIFF 1 is based on completed ABX account plans. SPIFF 2 is based on engagement strategy completion, and SPIFF 3 is based on completed workshops (capped).
-                  </div>
-                  <div>
-                    Check the <b>All 3 SPIFFs Completed Within 12 Months</b> box to apply the top-up bonus when eligible.
-                  </div>
-                </div>
-              )
-            })}
-
-            {Card({
-              t: "Results and CSV Export",
-              c: (
-                <div className="ui-grid-tight text-sm leading-6">
-                  <div>
-                    Results show totals for Sign-On, Recurrent, SPIFFs, and the overall total. The Payout Schedule lists all payments by date and category.
-                  </div>
-                  <div>
-                    Use <b>Show CSV</b> to generate an exportable schedule you can paste into Excel.
-                  </div>
-                </div>
-              )
-            })}
-
-            {Card({
-              t: "Settings JSON (Admin Use)",
-              c: (
-                <div className="ui-grid-tight text-sm leading-6">
-                  <div>
-                    Settings contain rate tables and bonus bands. Only plan admins should edit these values.
-                  </div>
-                  <div>
-                    If you paste JSON here, use <b>Apply</b> to update the calculator. Invalid JSON will be rejected.
-                  </div>
+                  <Suspense fallback={<div className="rounded-lg border border-border/70 bg-card/60 p-4 text-sm text-muted-foreground">Loading help content...</div>}>
+                    <HelpAccordion />
+                  </Suspense>
                 </div>
               )
             })}
@@ -1551,14 +1522,14 @@ function AppInner() {
                 </div>
               )
             })}
-          </div>
-        ) : null}
+          </TabsContent>
 
-        <div className="mt-1.5 text-center ui-text-xs ui-text-muted">
-          Restricted to authorized employees of Accommodations Plus International. © 2026 Esteban Candamo. All rights reserved.
+          <div className="mt-1.5 text-center ui-text-xs ui-text-muted">
+            Restricted to authorized employees of Accommodations Plus International. © 2026 Esteban Candamo. All rights reserved.
+          </div>
         </div>
-      </div>
-    </div>
+      </Tabs>
+    </TooltipProvider>
   );
 }
 
@@ -1623,7 +1594,4 @@ export default function App() {
   console.assert(parseRN("12x") === 12, "rn parse mixed");
   console.assert(parseUSD("$1,234,567") === 1234567, "usd parse commas");
   console.assert(parseUSD("12x") === 12, "usd parse mixed");
-  const csv = buildPayoutCSV([{ date: "2026-01-01", amount: 1234.5, label: "L", category: "Sign-on", source: "S" }]);
-  console.assert(csv.split(String.fromCharCode(10))[0] === "Date,Category,Source,Label,Amount,Status", "csv header");
-  console.assert(csv.includes("2026-01-01,Sign-on,S,L,1234.5,To be paid"), "csv row raw amount");
 })();

@@ -4,6 +4,7 @@
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "baseUrl": ".",
     "skipLibCheck": true,
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
@@ -12,6 +13,9 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
