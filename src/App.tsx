@@ -71,6 +71,10 @@ const parseUSD = (s: string) => {
   const v = Number(t);
   return Number.isFinite(v) ? Math.max(0, Math.round(v)) : 0;
 };
+const getYearFromIsoDate = (iso: string) => {
+  const match = /^(\d{4})-\d{2}-\d{2}$/.exec((iso ?? "").trim());
+  return match ? Number(match[1]) : null;
+};
 const pct = (x: any) => `${(n(x) * 100).toFixed(2)}%`;
 const addDays = (iso: string, d: number) => {
   if (!iso) return "";
@@ -728,16 +732,24 @@ function AppInner() {
   const [contractSections, setContractSections] = useState<Record<string, boolean>>({});
   const [cfg, setCfg] = useState<Config>(() => dclone(CFG0));
   const [s, setS] = useState<State>(() => dclone(S0));
-  const derivedProjectedRoomNights = useMemo(
+  const contractsWithYear = useMemo(
     () =>
-      s.contracts.reduce((total, contract) => {
-        if (contract.type === "SD_ACCOUNT") return total;
-        return total + n(contract.projectedRoomNights);
-      }, 0),
+      s.contracts.map((contract) => ({
+        ...contract,
+        signYear: getYearFromIsoDate(contract.startDate)
+      })),
     [s.contracts]
   );
-  const quota = useMemo(() => computeQuotaFactor(derivedProjectedRoomNights, s.quota), [derivedProjectedRoomNights, s.quota]);
-  const kpiOk = useMemo(() => derivedProjectedRoomNights >= 50000 || n(s.kpiRev) >= 500000, [derivedProjectedRoomNights, s.kpiRev]);
+  const planYearProjectedRoomNights = useMemo(
+    () =>
+      contractsWithYear.reduce((total, contract) => {
+        if (contract.type === "SD_ACCOUNT" || contract.signYear !== s.planYear) return total;
+        return total + n(contract.projectedRoomNights);
+      }, 0),
+    [contractsWithYear, s.planYear]
+  );
+  const quota = useMemo(() => computeQuotaFactor(planYearProjectedRoomNights, s.quota), [planYearProjectedRoomNights, s.quota]);
+  const kpiOk = useMemo(() => planYearProjectedRoomNights >= 50000 || n(s.kpiRev) >= 500000, [planYearProjectedRoomNights, s.kpiRev]);
   const quotaVarianceLabel = useMemo(() => {
     if (n(s.quota) <= 0) return "Quota Variance: -30.00% (Set quota)";
     const raw = n(quota.achievement) - 1;
@@ -749,25 +761,34 @@ function AppInner() {
   }, [quota.achievement, s.quota]);
 
   const cRank = useMemo(() => {
-    const el = s.contracts.filter((c) => c.type !== "SD_ACCOUNT").map((c) => ({ ...c, v: n(c.projectedRoomNights) }));
-    const so = [...el].sort((a, b) => b.v - a.v);
+    const grouped = new Map<number, Array<(typeof contractsWithYear)[number] & { v: number }>>();
     const m = new Map<string, number>();
-    so.forEach((c, i) => m.set(c.id, i + 1));
-    return s.contracts.map((c) => ({ ...c, rank: m.get(c.id) ?? null }));
-  }, [s.contracts]);
+    for (const contract of contractsWithYear) {
+      if (contract.type === "SD_ACCOUNT" || contract.signYear === null) continue;
+      const list = grouped.get(contract.signYear) ?? [];
+      list.push({ ...contract, v: n(contract.projectedRoomNights) });
+      grouped.set(contract.signYear, list);
+    }
+    for (const contracts of grouped.values()) {
+      const sorted = [...contracts].sort((a, b) => b.v - a.v);
+      sorted.forEach((contract, index) => m.set(contract.id, index + 1));
+    }
+    return contractsWithYear.map((contract) => ({ ...contract, rank: m.get(contract.id) ?? null }));
+  }, [contractsWithYear]);
 
   const signOn = useMemo(() => {
     const rows = cRank.map((c: any) => {
       const r = computeContractSignOnTotal(cfg, c, c.rank);
       return { ...c, sign: r.total, warn: r.warnings };
     });
-    const pre = rows.reduce((a: number, r: any) => a + n(r.sign), 0),
-      after = pre * quota.factor;
+    const pre = rows.reduce((a: number, r: any) => a + n(r.sign), 0);
+    const planYearPre = rows.reduce((a: number, r: any) => a + (r.signYear === s.planYear ? n(r.sign) : 0), 0);
+    const after = pre + planYearPre * (quota.factor - 1);
     const ev: EventRow[] = [];
     for (const r of rows as any[]) {
       for (const x of computeContractTiming(cfg, r, r.rank, n(r.sign))) ev.push({ date: x.date, amount: x.amount, label: x.label, category: "Sign-on", source: r.name });
     }
-    const adj = after - pre;
+    const adj = planYearPre * (quota.factor - 1);
     if (n(adj) !== 0 && s.includeQuotaInPayoutSchedule) {
       const quotaMet = n(quota.achievement) >= 1;
       const rawVariance = n(quota.achievement) - 1;
@@ -893,10 +914,10 @@ function AppInner() {
   }, [theme]);
   useEffect(() => {
     setS((prevState) => {
-      if (prevState.booked === derivedProjectedRoomNights && prevState.kpiRN === derivedProjectedRoomNights) return prevState;
-      return { ...prevState, booked: derivedProjectedRoomNights, kpiRN: derivedProjectedRoomNights };
+      if (prevState.booked === planYearProjectedRoomNights && prevState.kpiRN === planYearProjectedRoomNights) return prevState;
+      return { ...prevState, booked: planYearProjectedRoomNights, kpiRN: planYearProjectedRoomNights };
     });
-  }, [derivedProjectedRoomNights]);
+  }, [planYearProjectedRoomNights]);
   useEffect(() => {
     setS((prevState) => {
       const prev = prevState.payoutStatuses ?? {};
@@ -1069,7 +1090,7 @@ function AppInner() {
                           <RN v={s.quota} set={(v) => setState({ quota: v })} />
                         </Field>
                         <Field l="Booked New Room Nights">
-                          <InputField className="control-input" type="text" value={fmtI(derivedProjectedRoomNights)} readOnly aria-readonly="true" />
+                          <InputField className="control-input" type="text" value={fmtI(planYearProjectedRoomNights)} readOnly aria-readonly="true" />
                         </Field>
                       </div>
                       <div className="mt-2.5 ui-stack ui-text-13">
@@ -1094,14 +1115,14 @@ function AppInner() {
                       <div className="mb-2 ui-title">KPI Gate</div>
                       <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                         <Field l="KPI: New Annual Room Nights">
-                          <InputField className="control-input" type="text" value={fmtI(derivedProjectedRoomNights)} readOnly aria-readonly="true" />
+                          <InputField className="control-input" type="text" value={fmtI(planYearProjectedRoomNights)} readOnly aria-readonly="true" />
                         </Field>
                         <Field l="KPI: New Annual Revenue">
                           <USD v={s.kpiRev} set={(v) => setState({ kpiRev: v })} />
                         </Field>
                       </div>
                       <div className="mt-2.5 ui-stack ui-text-13">
-                        <Progress value={Math.min(100, Math.max((derivedProjectedRoomNights / 50000) * 100, (n(s.kpiRev) / 500000) * 100))} />
+                        <Progress value={Math.min(100, Math.max((planYearProjectedRoomNights / 50000) * 100, (n(s.kpiRev) / 500000) * 100))} />
                         <div className="flex justify-between">
                           <span className="ui-text-muted">KPI</span>
                           <b>{kpiOk ? "Eligible" : "Not Eligible"}</b>
@@ -1153,7 +1174,9 @@ function AppInner() {
                               <ChevronDown className={cn("size-4 transition-transform", isOpen && "rotate-180")} />
                             </Button>
                             <InputField className="flex-1 min-w-[220px] font-extrabold" value={c.name} onChange={(e) => setContract(c.id, { name: e.target.value })} />
-                            <Badge variant="default">Rank {c.rank ?? "-"}</Badge>
+                            <Badge variant="default">
+                              Rank {c.rank ?? "-"} {c.signYear ? `· ${c.signYear}` : "· No Year"}
+                            </Badge>
                           </div>
                           <div className="ui-row">
                             <ConfirmDeleteButton
