@@ -728,8 +728,16 @@ function AppInner() {
   const [contractSections, setContractSections] = useState<Record<string, boolean>>({});
   const [cfg, setCfg] = useState<Config>(() => dclone(CFG0));
   const [s, setS] = useState<State>(() => dclone(S0));
-  const quota = useMemo(() => computeQuotaFactor(s.booked, s.quota), [s.booked, s.quota]);
-  const kpiOk = useMemo(() => n(s.kpiRN) >= 50000 || n(s.kpiRev) >= 500000, [s.kpiRN, s.kpiRev]);
+  const derivedProjectedRoomNights = useMemo(
+    () =>
+      s.contracts.reduce((total, contract) => {
+        if (contract.type === "SD_ACCOUNT") return total;
+        return total + n(contract.projectedRoomNights);
+      }, 0),
+    [s.contracts]
+  );
+  const quota = useMemo(() => computeQuotaFactor(derivedProjectedRoomNights, s.quota), [derivedProjectedRoomNights, s.quota]);
+  const kpiOk = useMemo(() => derivedProjectedRoomNights >= 50000 || n(s.kpiRev) >= 500000, [derivedProjectedRoomNights, s.kpiRev]);
   const quotaVarianceLabel = useMemo(() => {
     if (n(s.quota) <= 0) return "Quota Variance: -30.00% (Set quota)";
     const raw = n(quota.achievement) - 1;
@@ -883,6 +891,12 @@ function AppInner() {
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+  useEffect(() => {
+    setS((prevState) => {
+      if (prevState.booked === derivedProjectedRoomNights && prevState.kpiRN === derivedProjectedRoomNights) return prevState;
+      return { ...prevState, booked: derivedProjectedRoomNights, kpiRN: derivedProjectedRoomNights };
+    });
+  }, [derivedProjectedRoomNights]);
   useEffect(() => {
     setS((prevState) => {
       const prev = prevState.payoutStatuses ?? {};
@@ -1055,7 +1069,7 @@ function AppInner() {
                           <RN v={s.quota} set={(v) => setState({ quota: v })} />
                         </Field>
                         <Field l="Booked New Room Nights">
-                          <RN v={s.booked} set={(v) => setState({ booked: v })} />
+                          <InputField className="control-input" type="text" value={fmtI(derivedProjectedRoomNights)} readOnly aria-readonly="true" />
                         </Field>
                       </div>
                       <div className="mt-2.5 ui-stack ui-text-13">
@@ -1080,14 +1094,14 @@ function AppInner() {
                       <div className="mb-2 ui-title">KPI Gate</div>
                       <div className="ui-grid-tight [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
                         <Field l="KPI: New Annual Room Nights">
-                          <RN v={s.kpiRN} set={(v) => setState({ kpiRN: v })} />
+                          <InputField className="control-input" type="text" value={fmtI(derivedProjectedRoomNights)} readOnly aria-readonly="true" />
                         </Field>
                         <Field l="KPI: New Annual Revenue">
                           <USD v={s.kpiRev} set={(v) => setState({ kpiRev: v })} />
                         </Field>
                       </div>
                       <div className="mt-2.5 ui-stack ui-text-13">
-                        <Progress value={Math.min(100, Math.max((n(s.kpiRN) / 50000) * 100, (n(s.kpiRev) / 500000) * 100))} />
+                        <Progress value={Math.min(100, Math.max((derivedProjectedRoomNights / 50000) * 100, (n(s.kpiRev) / 500000) * 100))} />
                         <div className="flex justify-between">
                           <span className="ui-text-muted">KPI</span>
                           <b>{kpiOk ? "Eligible" : "Not Eligible"}</b>
