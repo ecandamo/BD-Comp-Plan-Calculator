@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type ColumnDef, useReactTable } from "@tanstack/react-table";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Download, Search } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,11 +106,48 @@ export function PayoutDataTable({
     }
   });
 
+  const handleExportCsv = () => {
+    const exportRows = table.getRowModel().rows.map((row) => row.original);
+    if (!exportRows.length) {
+      toast.info("No payout rows to export.");
+      return;
+    }
+
+    const csvEscape = (value: string | number) => `"${String(value).replace(/"/g, "\"\"")}"`;
+    const csvLines = [
+      ["Date", "Category", "Source", "Label", "Amount", "Status"].map(csvEscape).join(","),
+      ...exportRows.map((row) =>
+        [row.date, row.category, row.source, row.label, row.amount.toFixed(2), statusLabel[row.status]].map(csvEscape).join(",")
+      )
+    ];
+
+    try {
+      const blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `payout-schedule-${stamp}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Unable to export payout schedule CSV.");
+    }
+  };
+
   return (
     <div className="grid gap-4">
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} placeholder="Filter payouts" className="pl-9" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} placeholder="Filter payouts" className="pl-9" />
+        </div>
+        <Button variant="outline" size="sm" onClick={handleExportCsv}>
+          <Download className="size-4" />
+          Export CSV
+        </Button>
       </div>
       <Table>
         <TableHeader>
